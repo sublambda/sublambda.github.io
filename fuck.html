@@ -13,16 +13,18 @@
 
 <body>
 
-  <div id="fuck" style="position: absolute; transition: 200ms">
+  <div id="fuck" style="position: absolute; transition: 100ms">
     D̴̨̤͉̻̀̈́̽͗O̵̪̬̍̈́̀N̸̞̆̚'̴̢̰̫̈́T̸͈̥̤̊̏͒ ̷̺̋͑͋͝L̶̝̝͠Ö̴̬Ò̸̃̄͜K̸̲̐ ̸͔̅A̸̟̟̹̣̎̾T̵̹̊̀̕ ̵̜͙͛̈́İ̸̛̳̟͘T̷̞̰̫̳̑̾
   </div>
 
   <script type="text/javascript">
     let fuck = document.getElementById("fuck");
-    setInterval(() => {
+    function fuckit() {
       fuck.style.top =  100 + Math.random()*20 + "px";
       fuck.style.left = 20  + Math.random()*20 + "px"
-    }, 1000);
+      setTimeout(fuckit, 1000+Math.random()*1000);
+    }
+    fuckit();
   </script>
 
 </body>
