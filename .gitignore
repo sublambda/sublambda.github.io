@@ -7,7 +7,6 @@
 .#*.scm
 
 src/jsm
-lib
 overlay/www
 draco
 dist
