@@ -20,9 +20,6 @@ notes
 
 tmp
 
-*.o1
-*.o1.js
-
 out.js
 
 .vscode
