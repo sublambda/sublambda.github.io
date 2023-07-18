@@ -9,7 +9,6 @@
 src/jsm
 overlay/www
 draco
-dist
 
 \#*\#
 *~
@@ -19,8 +18,6 @@ node_modules
 notes
 
 tmp
-
-out.js
 
 .vscode
 .DS_Store
