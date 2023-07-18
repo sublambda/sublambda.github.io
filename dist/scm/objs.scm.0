@@ -1,0 +1,418 @@
+(import (_six js))
+(import (srfi 69))                      ;hashtable
+(import (srfi 48))                      ;format
+
+(declare
+ (extended-bindings)
+ (standard-bindings)
+ (mostly-fixnum)
+ (block)
+ )
+
+
+(include "macros.scm")
+
+(define (extern name obj)
+  \ (window[`name] = `obj))
+
+(define (intern name)
+  \ (window[`name] || false))
+
+(define (hey . args)
+  ;;(println (format ";;; ~s" args))
+  \console.log.apply(null, `(cons "hey" args)))
+(extern "hey" hey)
+
+
+
+(define (ntext #!optional model)
+  (let* ((tx (%new troika.Text))
+         (set-text (lambda (text)
+                     (slot! tx text: text)
+                     (send tx sync:))))
+    (slot! tx text: ":")
+    (slot! tx castShadow: #t)
+    (slot! tx receiveShadow: #t)
+    (slot! tx font: "./stuff/SpecialElite-Regular.ttf")
+    (slot! tx outlineColor: #x88ffff)
+    (slot! tx outlineOpacity: .2)
+    (slot! tx outlineWidth: 0.005)
+    (slot! tx strokeColor: #xff0000)
+    (slot! tx strokeOpacity: .5)
+    (slot! tx fillColor: 0)
+    (slot! tx fillOpacity: 0.5)
+
+    (slot! tx ondatachanged:
+           (lambda (model)
+             (let ((data (slot model data:)))
+               (set-text data))))
+
+    (slot! tx ontransformchanged:
+           (lambda (model)
+             '(hey "nt:ontransform")))
+
+    (slot! tx settext:
+           (lambda (text)
+             (set-text text)))
+
+    ;; call this at end of view object constructor
+    (view-notify-object-changed (slot model id:))
+
+    tx))
+(extern "ntext" ntext)
+
+(define *data* 0)
+
+(define *undefined* \undefined)
+(define *null* \null)
+
+;; javascript truthiness
+(define (truthy? obj)
+  (and obj
+       (not (eq? obj *undefined*))
+       (not (eq? obj *null*))
+       (not (eq? obj 0))))
+
+(define *lastn* (make-hash-table))
+
+(define (lastn)
+  (hash-table->alist *lastn*))
+(extern "lastn" lastn)
+
+
+(define (qobj-init-fn obj)
+  '(hey (format "qobj-init ~s" 
+               (list (slot obj name:) 
+                     (slot obj ctor:)
+                     (slot obj id:)))))
+  
+(extern "qobj_init_fn" qobj-init-fn)
+
+
+;; stupid hack
+(define (view-detach-callback view)
+  #f)
+
+(extern "view_detach_callback" view-detach-callback)
+
+(define syncview \syncview)
+
+(define (view-init-callback view)
+  (set! *lastn* (make-hash-table)))
+
+(extern "view_init_callback" view-init-callback)
+
+
+;; first arg to preserve order since we can't sync
+(define (qobj-dispatch nd obj msg arg)
+  (let* ((id (slot obj id:))
+         (lastn (hash-table-ref/default *lastn* id 0)))
+    (when (> nd lastn)
+      (hash-table-set! *lastn* id nd)
+      (if (eq? arg *undefined*) (set! arg #f))
+      (let ((msg (string->keyword msg)))
+        (case msg
+          ((model:)
+           (hey "model" (slot obj name:))
+           #f)
+          ((setd: setdata:)
+           (slot! obj data: arg)
+           (view-notify-object-changed id))
+          (else    
+           (nerk "case wtf is" msg)
+           #f))))))
+
+(extern "qobj_dispatch" qobj-dispatch)
+
+
+
+(define fuck "f̸̗̎ú̴̩c̷̖͌ḳ̵̀")
+(extern "fuck" fuck)
+
+
+
+(define (getview)
+  \getview())
+
+
+
+;; runtime esm module import
+(define (dynamic-import stuff)
+  (##inline-host-expression "import(@1@)" stuff))
+
+(define (import-tone)
+  (dynamic-import "https://unpkg.com/tone@14.7.77/build/Tone.js"))
+
+
+(define (tone n)
+  (let ((synth (%new Tone.Synth)))
+    (set! synth (send synth toDestination:))
+    (send synth triggerAttackRelease: "C4" "32n")))
+
+(define (trigger-attack-release p #!optional (q .1))
+  (send (synth) triggerAttackRelease: p q))
+
+(define tar trigger-attack-release)
+
+(define (synth)
+  (send (%new Tone.Synth) toDestination:))
+
+
+
+
+(define (makestuff)
+  (makeobj "t0" "sotext")
+  (makeobj "nt" "ntext")
+  (makeobj "kball" "kball")
+  (makeobj "f0" "avatar")
+  (set-timeout movestuff 200))
+
+(define (movestuff)
+  (slide (vo "kball") 0 1 -2)
+  (grow (vo "kball") .3)
+  (slide (vo "t0") 2 1.2 -2)
+  (grow (vo "nt") 3)
+  (slide (vo "nt") 1 1.2 -1)
+  (roty (vo"nt") .3)
+  )
+
+(extern "makestuff" makestuff)
+(extern "movestuff" movestuff)
+
+;; send that tolerates null obj
+(define (send-soft obj . args)
+  (when (isobject? obj)
+    (apply send view args)))
+
+(define (soft-view-notify-object-changed id)
+  (send-soft (getview) notify_object_changed: id))
+
+
+(define (view-notify-object-changed id)
+  (let ((view (getview)))               ; view may not exist at start
+    (when view
+      (send view notify_object_changed: id))))
+
+
+(define (latticecube model)
+  (let* ((id (slot model id:))
+         (obj (sogltf "latticecube.glb" "latticecube"
+                      (lambda (ignore)
+                        (view-notify-object-changed id)))))
+    (slot! obj ondatachanged:
+           (lambda (model)
+             (let ((data (slot model data:)))
+               (if (isobject? data)
+                 (wireframe obj (truthy? (slot data wireframe:)))))))
+    obj))
+
+(extern "latticecube" latticecube)
+
+
+
+(define (avatar #!optional model)
+  (let* ((b (box .2 1 .2))
+         (mat (slot b material:)))
+    (send (slot mat color:) setHex: #xff4444)
+    (slot! mat transparent: #t)
+    (slot! mat opacity: .8)
+    b))
+
+(extern "avatar" avatar)
+
+
+(define vidbox \vidbox)
+
+"https://rx.0x.no:8401/stuff/enaudi-night.mp4"
+"https://rx.0x.no:8401/stuff/kf-hex.mp4"
+"https://rx.0x.no:8401/stuff/kf-skyline.mp4"
+
+(define (vbox #!optional model)
+  (let* ((vb (vidbox "https://rx.0x.no:8401/stuff/lodger-doorsteps.mp4"))
+         (vid (slot vb vid:)))
+    (slot! vb model: model)
+    (set-timeout (lambda () (slot! vid currentTime: 30)) 1000)
+    vb))
+(extern "vbox" vbox)
+
+
+;; hack, stolen
+(define-macro (-hexpr0 e)
+  `(##inline-host-expression
+    ,(string-append "@host2scm@(" e ")")))
+
+(define-macro (-hexpr e)
+  `(##inline-host-expression "@host2scm@(@1@)" e))
+
+(define currentcell \currentcell)
+
+'(define (torus #!optional model)
+  (let ((mesh (%new THREE.Mesh
+                    (%new THREE.TorusGeometry)
+                    (%new THREE.MeshStandardMaterial))))
+    '(thread
+     (lambda ()
+       (let loop ()
+         (send currentcell work:
+               (lambda ()
+                 (send (slot (slot mesh material:) color:)
+                       setHex: (send currentcell now:))))
+         (thread-sleep! 5)
+         (loop))))
+    mesh))
+
+'(extern "torus" torus)
+
+
+(define lowalk
+  (lambda () (sogltf "lowalk")))
+
+(define bash
+  (lambda () (sogltf "b44bash")))
+
+(extern "lowalk" lowalk)
+(extern "bash" bash)
+
+
+(define (kball #!optional model)
+  (let* ((geom (%new THREE.SphereGeometry 1 12 12))
+         (mat (%new THREE.MeshStandardMaterial))
+         (mesh (%new THREE.Mesh geom mat)))
+    (send (slot mat color:) setHex: #x555555)
+    (slot! mesh receiveShadow: #t)
+    (slot! mesh castShadow: #t)
+    ;; want to add this step automically
+    (when model
+      (view-notify-object-changed (slot model id:)))
+    mesh))
+(extern "kball" kball)
+
+(define (pbox #!optional model)
+  (let* ((b (%new THREE.BoxGeometry 1 1 1))
+         (m (%new THREE.MeshStandardMaterial
+                  (alist->object '((color: #x997777)
+                                   ;;(side: \THREE.DoubleSide)
+                                   (transparent: #t)
+                                   (opacity: 0.7)))))
+         (mesh (%new THREE.Mesh b m)))
+    (slot! mesh receiveShadow: #t)
+    (slot! mesh castShadow: #t)
+    mesh))
+
+(extern "pbox" pbox)
+
+
+(define (later fn)
+  (set-timeout fn 1))
+
+(define (dipshit)
+  (let ((h (htmlbox)))
+    (set-timeout
+     (lambda ()
+       ((slot h seturl:) "https://sublambda.github.io/"))
+     20)
+    h))
+
+(extern "dipshit" dipshit)
+
+
+(define (htmlbox #!optional model)
+  (let* ((canvas (create-element "canvas"))
+         (ctx (send canvas getContext: "2d"))
+         (tex (%new THREE.CanvasTexture canvas))
+         (box (%new THREE.BoxGeometry 1 1 .01))
+         (mat (%new THREE.MeshBasicMaterial
+                    (-hexpr "{transparent: true, opacity: 1}")))
+         (mesh (%new THREE.Mesh box mat))
+         (w 1024)
+         (h 1024)
+         (clearfn (lambda ()
+                    (send ctx clearRect: 0 0 w h)))
+         (upfn (lambda (rendered)
+                 (slot! tex needsUpdate: #t)))
+         (drawfn (lambda (rendered)
+                    (clearfn)
+                    (send ctx drawImage: (slot rendered image:) 0 0)
+                    (upfn rendered))))
+    (slot! mesh name: "htmlbox")
+    (slot! mesh tag: "htmlbox")
+    (slot! tex encoding: 3001)
+    (slot! mat map: tex)
+    (slot! canvas width: w)
+    (slot! canvas height: h)
+    (slot! mesh canvas: canvas)
+    (slot! mesh castShadow: #t)
+    (slot! mesh sethtml:
+           (lambda (html)
+             (clearfn)
+             \rasterizeHTML.drawHTML(`html,`canvas).then(`drawfn).then(`upfn)))
+    (slot! mesh seturl:
+           (lambda (url)
+             (clearfn)
+             \rasterizeHTML.drawURL(`url,`canvas).then(`upfn)))
+    (later (lambda ()
+             ((slot mesh seturl:)
+              (string-append "foo2.html#"
+                             (number->string
+                              (random-integer 10000000000))))))
+    mesh))
+
+(extern "htmlbox" htmlbox)
+
+
+(define (points)
+  (define (r)
+    (* (- (random-real) .5) 10))
+  (define (gen-positions)
+    [])
+  (define (gen-colors)
+    [])
+  (let ((geom (%new THREE.BufferGeometry))
+        (positions (gen-positions))
+        (colors (gen-colors)))
+    (send geom setAttribute position:
+          (%new THREE.Float32BufferAttribute positions 3))
+    (send geom setAttribute color:
+          (%new THREE.Float32BufferAttribute colors 3))
+    (let ((tex (send (%new THREE.TextureLoader) load: "tmp/disc.png"))
+          (mat (%new THREE.PointsMaterial 
+                     (-hexpr "{size: .03,
+                               depthWrite: false,
+                               blending: THREE.AdditiveBlending,
+                               vertexColors: true,
+                               transparent: true
+                               }")))
+          (points (%new THREE.Points geom mat)))
+      (slot! mat map: tex)
+      (slot! points tag: "points")
+      points)))
+
+(extern "pts" points)
+
+(define (raymarcher)
+  (define (r)
+    (* 2 (- (random-real) .5)))
+  (define (gen-layer) 
+    (-hexpr 
+     "{
+        color: new Color(g-.0,g,g),
+        operation: operations.union,
+        position: new Vector3(p(),p(),p()),
+        rotation: (new Quaternion())
+          .setFromAxisAngle(new Vector3(r(),r(),r(),r()))
+        scale: new Vector3(...(s=.8,[s,s,s])),
+        shape,
+      }"))
+  (let ((rm (%new Raymarcher
+                  (-hexpr "{
+                            conetracing: true,
+                            resolution: .3,
+                            blending: .2,
+                            roughness: 1,
+                            metalness: .8,
+                            envMapIntensity: .7,
+                           }"))))
+    (slot! rm layers: (gen-layers))
+    (slot! rm tag: "raymarcher")
+    rm))
+(extern "raymarcher" raymarcher)

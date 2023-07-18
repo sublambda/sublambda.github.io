@@ -1,0 +1,71 @@
+
+<html>
+  <script type="text/javascript">
+    console.log("sandbox worker");
+
+    function ld(url, callback) {
+      var script = document.createElement("script");
+      script.type = "application/javascript";
+      script.onload = callback;
+      script.src = url;
+      document.getElementsByTagName("head")[0].appendChild(script);
+    }
+    let mainwindow; // hack, do better
+
+    ld("VM.min.js", () => {
+      console.log("OK");
+      self.confirm = () => true;
+
+      self.window = self;
+
+      const dev = _os_device_from_basic_console()
+
+      dev.use_async_input = () => true;
+
+      // receiving output from gvm
+      dev.output_add_buffer = (buffer) => {
+        const len = dev.wbuf.length;
+        const newbuf = new Uint8Array(len + buffer.length);
+        newbuf.set(dev.wbuf);
+        newbuf.set(buffer, len);
+        dev.wbuf = newbuf;
+
+        const output = dev.decoder.decode(dev.wbuf);
+        dev.wbuf = new Uint8Array(0);
+
+        console.log(";;", output);
+        if (mainwindow)
+          mainwindow.postMessage(output);
+      };
+
+      // sending input to gvm
+      self.onmessage = (e) => {
+        mainwindow = e.source;
+        console.log("origin", e.origin);
+
+        const input = e.data
+        if (!input.length) return
+
+        console.log(": ", input);
+
+        const condvar_scm = dev.read_condvar_scm;
+        dev.rbuf = dev.encoder.encode(input);
+        dev.rlo = 0;
+        dev.read_condvar_scm = null;
+        _os_condvar_ready_set(condvar_scm, true);
+      }
+
+      _program_start();
+      
+    });
+
+  </script>  
+
+
+  <!--
+  <script src="gambit-worker.js"></script>
+  -->
+
+
+</html>
+

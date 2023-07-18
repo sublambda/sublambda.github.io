@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    
+    <!-- initial/mininum-scale magic for ios/webkit css3d -->
+    <meta name="viewport" content="width=device-width, 
+                                   initial-scale=1.0,
+                                   minimum-scale=.5, 
+                                   maximum-scale=1.5,
+                                   user-scalable=no"
+          >
+    <!-- get chrome to fuck off -->
+    <meta http-equiv="Permissions-Policy" content="interest-cohort=()">
+    </link>
+    
+    <style type="text/css">
+
+      @font-face {
+        font-family: 'SpecialElite';
+        src: url('stuff/SpecialElite-Regular.ttf') format('truetype');
+      }
+
+      ::-webkit-scrollbar {
+        display: none;
+        width: 0px;
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: transparent;
+      }
+
+      body::backdrop {
+        background: #bbbbb0;
+        -webkit-overflow-scrolling: none;
+        overflow: hidden;
+        overscroll-behavior: none;
+      }
+
+      body:fullscreen {
+        background: #bbbbb0;
+        background: #333333;
+      }
+      body:-webkit-full-screen {
+        background: #bbbbb0;
+        background: #333333;
+      }
+
+      body {
+        //background: #bbbbb0;
+        background: rgba(0,0,0,0.3);
+        margin: 0px;
+        padding: 0px;
+        overflow: hidden;
+        //font-family: monospace;
+        //font-weight: lighter;
+        font-family: SpecialElite;
+        font-size: 14px;
+        color: rgba(255,255,255,.7);
+      }
+
+      iframe {
+        overflow: scroll;
+        -webkit-overflow-scrolling: touch;
+        min-width: 100%;
+        border: none;
+      }
+
+      .flexframe {
+        flex-grow: 1;
+        border: 2px solid red;
+        margin: 0;
+        padding: 0;
+      }
+
+      .hair {
+        background: rgba(255,0,0,.5);
+        width: 100px;
+        height: 80px;
+        box-shadow: 1px 1px 5px rgba(0,0,0,0.5);
+        border-radius: 15px;
+        pointer-events: none;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: visible;
+        -webkit-backface-visibility: hidden;
+        transform-style: preserve-3d;
+        -webkit-transform: translate3d(0, 0, 0);
+        //transform: scale(.02);
+        transform: scale(.02) translate3d(0, 0, 0);
+      }
+
+      .panel {
+        padding: 0px;
+        margin: 0px;
+        overflow: hidden;
+        //z-index: 1;
+        //opacity: .9;
+        background: transparent;
+      }
+      .limina {
+        cursor: auto;
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        height: 100%;
+        //min-width: 800px;
+        background: transparent;
+        padding: 0px;
+        margin: 0px;
+        overflow: hidden;
+      }
+
+      @media (max-width: 600px) {
+        .repl {
+          height: 95%;
+        }
+      }
+
+      #repldiv {
+        position: fixed;
+        bottom: 1px;
+        left: 1px;
+      }
+
+      @media screen and (max-width: 600px) {
+        .repldiv {
+          width: 368px;
+        }
+      }
+
+      .repl {
+        position: absolute;
+        height: 200px;
+        min-width: 370px;
+        width: 92%;
+        border-radius: 10px;
+        overflow-y: scroll;
+        overflow-x: hidden;
+      }
+
+      .codemirror {
+        line-height: 1.0;
+      }
+
+      .repldiv {
+        //display: flex;
+        line-height: 1.0;
+        width: 386px; /*iphone*/
+        height: 200px;
+        background: transparent;
+        overflow: hidden;
+        padding: 0px;
+        margin: 0px;
+        transform-origin: bottom left;
+        transform: scale(0.2);
+        opacity: .3;
+
+        padding-top: 30px;
+        padding-right: 20px;
+      }
+
+      @media (min-width: 600px) {
+        .repldiv {
+          min-width: 600px;
+        }
+      }
+      .repldiv0 {
+        transform: scale(1);
+        opacity: 0;
+      }
+
+      .repldivtransition {
+        transition: .2s;
+      }
+
+      .repldiv:hover {
+        opacity: .9;
+        transform: scale(1.0);
+      }
+
+      .repldiv:focus-within {
+        opacity: .9;
+        transform: scale(1.0);
+        transition-delay: 0s;
+      }
+
+      .replbutton {
+        text-align: center;
+        color: rgba(255,255,220,.6);
+        padding-top: 4px;
+        padding: 4px;
+        padding-left: 8px;
+        padding-right: 8px;
+        margin-bottom: 8px;
+        transition: .1s;
+        //transform-origin: center;
+      }
+
+      .replbutton:hover {
+        //padding-top: 0px;
+        color: rgba(255,200,50,.99);
+        transition: .1s;
+        transform: scale(1.8);
+      }
+
+      .replbuttons {
+        margin: 8px;
+        margin-right: 24px;
+        float: right;
+        position: relative;
+        font-size: 16px;
+        z-index: 1;
+        overflow: visible;
+      }
+
+      #h {
+        color: #bbbbb0;
+        font-size: 20px;
+        float: right;
+        margin-right: 8px;
+        text-shadow: .7px .7px 3px rgba(0,0,0,0.3);
+      }
+
+      #lim {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        height: 100%;
+      }
+
+      .button {
+        z-index: 2;
+        padding: 1px;
+        text-shadow: .5px .5px 2px black;
+      }
+      
+      .buttontray {
+        position: absolute;
+        width: 2px;
+        overflow: visible;
+        z-index: 5;
+        top: 30px;
+        transition: .5s;
+        opacity: 0.4;
+      }
+
+      @media screen and (max-width: 600px) {
+        #leftbuttons {
+          transform: scale(1.3);
+        }
+      }
+
+      #leftbuttons {
+        font-size: 16px;
+        left: 0px;
+      }
+      #rightbuttons {
+        right: 0px;
+      }
+
+      .bttn {
+        text-align: center;
+        color: black;
+        color: transparent;
+        width: 12px;
+        height: 12px;
+        border-radius: 20px;
+        background: rgba(0,0,0,0);
+        border: 2px dotted black;
+        display: inline-block;
+        margin: 4px;
+        margin-top: 25px;
+        padding: 4px;
+        transform: scale(1);
+      }
+      .bttn:hover {
+        color: red;
+      }
+
+      .image {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 120px;
+        //height: 80px;
+        opacity: 0.5;
+        z-index: 2;
+        margin: 2px;
+        box-shadow: 1px 1px 5px rgba(0,0,0,0.5);
+      }
+
+      .cm-editor { height: 100% }
+
+      .cm-line { line-height: 1.1 }
+
+      .cm-editor {
+        transition: 0s;
+      }
+      .cm-cursorLayer {
+        animation-duration: 20s;
+      }
+      .cm-cursor {
+        animation-duration: 20s;
+      }
+      .cm-cursor-primary {
+        animation-duration: 20s;
+      }
+      .cursor {
+        animation-duration: 20s;
+      }
+      
+      .cm-focused .cm-cursorLayer: {
+        animation: "steps(1) cm-blink 1200s infinite";
+      }
+      .filter {
+        filter: url("#turb");
+      }
+
+      @keyframes squigglevision {
+        0% {
+          filter: url("#turbulence-1");
+        }
+        25% {
+          filter: url("#turbulence-2");
+        }
+        50% {
+          filter: url("#turbulence-3");
+        }
+        75% {
+          filter: url("#turbulence-4");
+        }
+        100% {
+          filter: url("#turbulence-5");
+        }
+      }
+
+      .squiggle {
+        animation: squigglevision 0.6s infinite;
+      }
+
+      #no {
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        line-height: 1.5;
+        text-shadow: 1px 1px 10px black;
+        color: rgba(200,200,200,.5);
+        font-size: 400px;
+        position: absolute;
+        transition: 1s;
+        transition-delay: 1s;
+        background: #bbbbb0;
+        padding: 20px;
+        //transform: scale(-1);
+        text-align: center;
+        visibilty: hidden;
+      }
+
+    </style>
+
+    <script src="out.js"></script>
+
+  </head>
+
+  <body>
+    <script type="text/javascript">
+      var t0 = Date.now();
+    </script>
+
+    <svg display="none">
+      <defs>
+        <filter id="turb">
+          <feTurbulence baseFrequency="0.3" numOctaves="2" />
+          <feDisplacementMap in="SourceGraphic" scale="20" />
+        </filter>
+        <filter id="turbulence-1">
+          <feTurbulence type="fractalNoise" baseFrequency="0.003" numOctaves="2" data-filterId="3" />
+          <feDisplacementMap xChannelSelector="R" yChannelSelector="G" in="SourceGraphic" scale="25" />
+        </filter>
+
+        <filter id="turbulence-2">
+          <feTurbulence type="fractalNoise" baseFrequency="0.0025" numOctaves="2" data-filterId="3" />
+          <feDisplacementMap xChannelSelector="R" yChannelSelector="G" in="SourceGraphic" scale="25" />
+        </filter>
+
+        <filter id="turbulence-3">
+          <feTurbulence type="fractalNoise" baseFrequency="0.0015" numOctaves="2" data-filterId="3" />
+          <feDisplacementMap xChannelSelector="R" yChannelSelector="G" in="SourceGraphic" scale="25" />
+        </filter>
+
+        <filter id="turbulence-4">
+          <feTurbulence type="fractalNoise" baseFrequency="0.002" numOctaves="2" data-filterId="3" />
+          <feDisplacementMap xChannelSelector="R" yChannelSelector="G" in="SourceGraphic" scale="25" />
+        </filter>
+
+        <filter id="turbulence-5">
+          <feTurbulence type="fractalNoise" baseFrequency="0.001" numOctaves="2" data-filterId="3" />
+          <feDisplacementMap xChannelSelector="R" yChannelSelector="G" in="SourceGraphic" scale="25" />
+        </filter>
+      </defs>
+
+
+    </svg>
+
+    <div tabindex="1" id="limina" class="limina"></div>
+
+    <div id=repldiv class="repldiv repldiv0"> <!-- class order matters! -->
+      <div id="replbuttons" class="replbuttons"> </div>
+      <div tabindex="0" id="repl" class="repl"> </div>
+    </div>
+
+    <div id="leftbuttons" class="buttontray"> </div>
+
+    <img id="img0" class="image">
+
+    <!--
+    <div id="no" class=squiggle>
+      f̸̗̎ú̴̩c̷̖ḳ̵̀
+      f̸̗̎ú̴̩c̷̖͌ḳ̵̀
+      <br>
+      性交
+      <br>
+      uh...<br>
+      ಠ益ಠ
+      <br>
+      Блять
+    </div>
+
+    <script type="text/javascript">
+      setTimeout(()=>document.getElementById("no").style.opacity=0,1);
+      //let t0 = Date.now(),
+      //div = document.getElementById("no"),
+      //up = setInterval(()=>div.innerHTML=Date.now()-t0, 20);
+      setTimeout(()=> {
+        document.getElementById("no").remove();
+        //clearInterval(up);
+      }, 2000);
+    </script>
+
+    -->
+
+</div>
+
+  </body>
+</html>
