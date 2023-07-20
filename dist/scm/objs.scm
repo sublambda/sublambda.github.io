@@ -298,7 +298,7 @@
     (if (is-embedded?)
         (slide hands 0 -.32 -.5)
       (slide hands 0 -.2 -.5))
-    (grow hands .12)
+    (grow hands .2)
     '(let ((specs (sogltf "glasses.glb")))
       (send b add: specs)
       (slide specs 0 .01 -.2)
@@ -521,7 +521,7 @@
                            (draw-html html canvas)
                            (update-texture)))
 
-    (send mesh seturl: "foo2.html")
+    ;;(send mesh seturl: "foo2.html")
 
     mesh))
 
@@ -767,9 +767,6 @@
 (define MarchingCubes (intern MarchingCubes:))
 ;;(define MarchingCubes \MarchingCubes)
 
-(define red (%new THREE.Color #xff0000))
-(extern "red" red)
-
 (define (matcap0)
   (%new THREE.MeshMatcapMaterial
         (alist->object
@@ -793,13 +790,12 @@
                         (side: 2)))))
          (mmat (%new THREE.MeshMatcapMaterial
                      (alist->object
-                      `((matcap: ,(load-texture "1024/mc142.png"))
-                        ;;(matcap: ,(load-texture "1024/mc448.png"))
-                        (vertexColors: #t)
+                      `(;;(matcap: ,(load-texture "1024/mc142.png"))
+                        (matcap: ,(load-texture "1024/mc448.png"))
+                        (vertexColors: #f)
                         (side: 2)
                         (transparent: #t)
-                        (opacity: .7)
-                        (vertexColors: #t)))))
+                        (opacity: .7)))))
          (mc (%new MarchingCubes 20 mmat #f #t 50000)))
     (slot! mc castShadow: #t)
     (slot! mc receiveShadow: #t)

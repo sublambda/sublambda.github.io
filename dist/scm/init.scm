@@ -74,3 +74,8 @@
 (nlim)
 (uptime "init3")
 
+(if (is-embedded?)
+    (thread (lambda ()
+              (thread-sleep! .5)
+              (send (slot lim scene:) remove: (vobj f0:)))))
+

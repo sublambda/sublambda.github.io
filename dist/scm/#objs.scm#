@@ -1,17 +1,20 @@
 (nerk "objs")
 
+(##include "~~lib/_gambit#.scm")  
+
+(import (_six js))
+(import (srfi 28))                      ;format
+(import (srfi 69))                      ;hashtable
+;(import _match)
+
+(include "macros.scm")
+
 (declare
  (extended-bindings)
  (standard-bindings)
  (block)
  )
 
-(import (_six js))
-(import (srfi 28))                      ;format
-(import (srfi 69))                      ;hashtable
-(import _match)
-
-(include "macros.scm")
 
 (define (extern name obj)
   \ (window[`name] = `obj))
@@ -23,11 +26,6 @@
   (println (format ";;; hey ~s" args))
   \console.warn.apply(null, `(cons "hey" args))
   )
-(extern "hey" hey)
-
-;;(define (fuckme)
-;;  (hey ";;wtf"))
-;;(fuckme)
 
 (define (ntext #!optional model)
   (let* ((tx (%new troika.Text))
@@ -323,10 +321,10 @@
 "https://rx.0x.no:8401/stuff/kf-skyline.mp4"
 
 (define (vbox #!optional model)
-  (let* ((vb (vidbox "https://rx.0x.no:8401/stuff/lodger-doorsteps.mp4"))
+  (let* ((vb (vidbox "https://meat.local/Hegre%20ariel%20hegre%20hegre%20art-3yqpc.mp4"))
          (vid (slot vb vid:)))
     (slot! vb model: model)
-    (set-timeout (lambda () (slot! vid currentTime: 30)) 1000)
+    (set-timeout (lambda () (slot! vid currentTime: 8)) 1000)
     vb))
 (extern "vbox" vbox)
 
@@ -472,7 +470,6 @@
           (hey "reparent" (slot ob name:))
           (reparentobj ob (getobj parentid)))))))
 
-
 (extern "default_object_data_changed" default-object-data-changed)
 
 (define (htmlbox #!optional model)
@@ -493,8 +490,7 @@
                    (send ctx drawImage: (slot rendered image:) 0 0)
                    (update-texture))))
 
-    ;;(slot! tex encoding: 3001)
-    (slot t
+    (slot! tex colorSpace: "srgb")
     (slot! mat map: tex)
     (slot! mat transparent: #t)
     (slot! canvas width: w)
@@ -525,7 +521,7 @@
                            (draw-html html canvas)
                            (update-texture)))
 
-    (send mesh seturl: "foo2.html")
+    ;;(send mesh seturl: "foo2.html")
 
     mesh))
 
@@ -771,8 +767,7 @@
 (define MarchingCubes (intern MarchingCubes:))
 ;;(define MarchingCubes \MarchingCubes)
 
-(define red (%new THREE.Color #xff0000))
-(extern "red" red)
+
 
 (define (matcap0)
   (%new THREE.MeshMatcapMaterial
@@ -797,13 +792,12 @@
                         (side: 2)))))
          (mmat (%new THREE.MeshMatcapMaterial
                      (alist->object
-                      `((matcap: ,(load-texture "1024/mc142.png"))
-                        ;;(matcap: ,(load-texture "1024/mc448.png"))
-                        (vertexColors: #t)
+                      `(;;(matcap: ,(load-texture "1024/mc142.png"))
+                        (matcap: ,(load-texture "1024/mc448.png"))
+                        (vertexColors: #f)
                         (side: 2)
                         (transparent: #t)
-                        (opacity: .7)
-                        (vertexColors: #t)))))
+                        (opacity: .7)))))
          (mc (%new MarchingCubes 20 mmat #f #t 50000)))
     (slot! mc castShadow: #t)
     (slot! mc receiveShadow: #t)
@@ -944,15 +938,15 @@
            (lambda (model)
              (let* ((data (slot model data:))
                     (points (slot data points:)))
-               (hey "sculptfuck" (vector? points) points)
                (when (vector? points)
-                 (let ((vobj (send model viewobj:)))
+                 (let ((vo (send model viewobj:)))
                    (vector-for-each
                     (lambda (pt)
-                      (sball vobj
-                             (vector-ref pt 0) (vector-ref pt 1)
-                             (vector-ref pt 2) (vector-ref pt 3)
-                             ))
+                      (sball vo
+                             (vector-ref pt 0)
+                             (vector-ref pt 1)
+                             (vector-ref pt 2)
+                             (vector-ref pt 3)))
                     points))))))
     sc))
 
@@ -1007,4 +1001,4 @@
 (define (honk)
   (##inline-host-expression "console.log('honk', @1@, @host2scm@(@1@))"
                             gambit-log-function))
-;;(honk)
+(honk)
