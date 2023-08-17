@@ -32,7 +32,11 @@
     ((_ x a b c d)
      \_new(x,`a,`b,`c,`d))
     ((_ x a b c d e)
-     \_new(x,`a,`b,`c,`d,`e))))
+     \_new(x,`a,`b,`c,`d,`e))
+    ((_ x a b c d e f)
+     \_new(x,`a,`b,`c,`d,`e,`f))
+    ((_ x a b c d e f g)
+     \_new(x,`a,`b,`c,`d,`e,`f,`g))))
 
 (define-syntax %%new
   (syntax-rules ()

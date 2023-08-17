@@ -2,45 +2,39 @@
  (extended-bindings)
  (standard-bindings))
 
+(define window \window)
 (define uptime \uptime)
-(uptime "init")
+
+(define (set-slot obj key val)
+  (begin \ (`obj)[`key]=`val))
+
+(define slot! set-slot)
+
 
 (define (nerk . args)
   \ (console.log.apply(null, `(cons "[INIT]" args))))
 
-(##debug-modules?-set! #t)
+;;(##debug-modules?-set! #t)
 ;;(module-search-order-add! ".")
 
-;; import preloads 
-;; (load .o1 to prevent probing for newer versions)
-;;(load "~~/scm/nlibs.o1")
-(load "~~/scm/util.o1")
-(load "~~/scm/objs.o1")
-
-(define (load-nlibs)
-  (load "~~/scm/nlibs.o1"))
+(define *repl* \repl)
 
 (define (gambit-log-function . args)
   (println (cons ";;; " (map (lambda (x) (list x " ")) args)))
   (force-output)
-  (repl-move-to-end))
+  (send *repl* append: ""))
 
 ;;; gambit-log-function will be called by console.log replacemnet
+;;\ (window.gambit_log_function = `gambit-log-function)
 
-\ (window.gambit_log_function = `gambit-log-function)
+(slot! window gambit_log_function: gambit-log-function)
 
+(uptime "init1")
 
-(define *repl* \repl)
-
-(define (repl-append s)
-  (send *repl* append: s))
-
-(define (repl-move-to-end)
-  (repl-append ""))
-
-(define (repl-focus)
-  (send *repl* focus:))
-
+;; import preloads 
+;; (load .o1 to prevent probing for newer versions)
+(load "~~/scm/util.o1")
+(load "~~/scm/objs.o1")
 
 (define lim #f)
 
@@ -50,32 +44,20 @@
     (set! lim nl)
     nl))
 
-(define (unload lim)
-  (send lim unload:))
-
-;(addbutton "@" (lambda (e) (nlim)))
-
 (define (include-macros)
   (eval '(include "~~/scm/macros.scm")))
 
 (define (include-imports)
   (eval '(include "~~/scm/imports.scm")))
 
-(define (include-stuff)
-  (include-macros)
-  (include-imports))
-
-(extern "includestuff" include-stuff)
-
-;;(slot! (slot lim floor:) visible: #f)
-
 
 (uptime "init2")
 (nlim)
 (uptime "init3")
 
-(if (is-embedded?)
-    (thread (lambda ()
-              (thread-sleep! .5)
-              (send (slot lim scene:) remove: (vobj f0:)))))
 
+
+(define (orbitcontrols)
+  (send lim addorbitcontrols:))
+(define (fpcontrols)
+  (send lim addfpcontrols:))

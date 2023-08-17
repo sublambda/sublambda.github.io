@@ -140,6 +140,11 @@
         overflow-y: scroll;
         overflow-x: hidden;
       }
+      .repl2 {
+        position: absolute;
+        transform-origin: bottom right;
+        transform: scale(1);
+      }
 
       .codemirror {
         line-height: 1.0;
@@ -360,6 +365,15 @@
         visibilty: hidden;
       }
 
+      #status {
+        margin-top: 2px;
+        position: absolute;
+        right: 4px;
+        top: 4ps;
+        color: black;
+        opacity: 0.5;
+      }
+
     </style>
 
     <script src="out.js"></script>
@@ -416,6 +430,7 @@
     <div id="leftbuttons" class="buttontray"> </div>
 
     <img id="img0" class="image">
+    <div id="status" class="status">status</div>
 
     <!--
     <div id="no" class=squiggle>

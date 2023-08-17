@@ -1,4 +1,4 @@
-(nerk "util")
+(uptime "util")
 
 (declare
  (extended-bindings)
@@ -14,9 +14,11 @@
 (include "~~lib/_gambit#.scm") ;; for macro-check-string, macro-absent-obj, etc
 (include "macros.scm")
 
+(define window \window)
 
 ;;; foreign imports 
-(define is-embedded? \isembedded)
+(define (is-embedded?)
+  (eq? (slot window _embedded:) #t))
 
 (define objs \objs)
 (define objname \objname)
@@ -46,6 +48,9 @@
 (define model-setpqs \model_setpqs)
 (define model-setquat \model_setquat)
 (define model-setscale \model_setscale)
+
+(define restorescene \restorescene)
+(define savescene \savescene)
 
 
 (define (extern name obj)
@@ -281,6 +286,9 @@
 (define (vec3 #!optional (x 0) (y 0) (z 0))
   (%new THREE.Vector3 x y z))
 
+(define (clearcache)                    ;for wkwebkit
+  (send lim clearcache:))
+
 (define (scene)
   (slot lim scene:))
 
@@ -475,3 +483,17 @@
                    ob)))
                    
                             
+(define (scene-children)
+  \lim.scene.children)
+
+(define (exportmap id)
+  \lim.exportmap(`id))
+
+(define (importmap id)
+  \lim.importmap(`id))
+
+(define (savemap id)
+  \lim.savemap(`id))
+
+(define (restoremap id)
+  \lim.restoremap(`id))

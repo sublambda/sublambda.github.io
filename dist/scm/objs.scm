@@ -1,4 +1,4 @@
-(nerk "objs")
+(uptime "objs")
 
 (##include "~~lib/_gambit#.scm")  
 
@@ -287,23 +287,29 @@
     (slot! b receiveShadow: #t)
     b))
 
+(define console-log \console.log)
+
 (define (avatar-hands #!optional model)
-  (let* ((b (box .2 1 .2))
+  (let* ((b (box .04 1 .04))
          (mat (slot b material:))
          (hands (sogltf "handsbw.glb")))
     (send (slot hands position:) set: 0 0 10)
-    ;;(send (slot hands scale:) set: .01 .01 .01)
-    ;;(send (slot hands scale:) set: .05 .05 .05)
+    (send (slot hands scale:) set: .05 .05 .05)
     (send b add: hands)
     (if (is-embedded?)
-        (slide hands 0 -.32 -.5)
-      (slide hands 0 -.2 -.5))
-    (grow hands .2)
-    '(let ((specs (sogltf "glasses.glb")))
-      (send b add: specs)
-      (slide specs 0 .01 -.2)
-      (grow specs .05)
-      (roty specs 3.14))
+        (begin
+          (slot! b visible: #f)
+          (slide hands 0 -.32 -.5)
+          (send (slot hands scale:) set: .01 .01 .01))
+      (begin
+        (slide hands 0 -.2 -.5)
+        (grow hands .1)))
+    (when #f
+      (let ((specs (sogltf "glasses.glb")))
+        (send b add: specs)
+        (slide specs 0 .01 -.2)
+        (grow specs .05)
+        (roty specs 3.14)))
     (send (slot mat color:) setHex: #xff4444)
     (slot! mat transparent: #t)
     (slot! mat opacity: .8)
@@ -342,11 +348,6 @@
 
 (define current-view \getview)
 
-
-(define (1+ x)
-  (+ x 1))
-(define (1- x)
-  (- x 1))
 
 ;; cellwork is a crucial workaround
 ;; just calls work method on currentcell
@@ -406,7 +407,7 @@
   (lambda (#!optional model) (sogltf "lowalk")))
 
 (define bash
-  (lambda (#!optional model) (sogltf "b44bash")))
+  (lambda (#!optional model) (sogltf "lastofbash")))
 
 (extern "lowalk" lowalk)
 (extern "bash" bash)
@@ -521,7 +522,7 @@
                            (draw-html html canvas)
                            (update-texture)))
 
-    ;;(send mesh seturl: "foo2.html")
+    (send mesh seturl: "foo2.html")
 
     mesh))
 
@@ -598,7 +599,7 @@
     tx))
 
 (define (tube #!optional model)
-  (let* ((geom (%new THREE.TubeGeometry undefined 10 .1))
+  (let* ((geom (%new THREE.TubeGeometry undefined 10 .2 12 #t))
          (mat (%new THREE.MeshMatcapMaterial
                     (alist->object
                      `((matcap:
@@ -626,7 +627,7 @@
     (slot! mesh pts: pts)
     (slot! mesh lseg: 100)
     (slot! mesh rseg: 16)
-    (slot! mesh radius: 1.2)
+    (slot! mesh radius: .8)
 
     (slot! mesh ondatachanged:
            (lambda (model)
@@ -668,6 +669,30 @@
     mesh))
 
 (define cylinder (intern "cylinder"))
+
+(define (catmull-rom-curve pts)
+  (let ((curve (%new THREE.CatmullRomCurve3 pts)))
+    (slot! curve type: "catmullrom")
+    (slot! curve closed: #f)
+    curve))
+
+;; radius, curvepts
+(define (extrusion-geom r pts)
+  (let ((shape (%new THREE.Shape))
+        (curve (catmull-rom-curve (list->vector
+                                   (map (lambda (p) (apply vec3 p)) pts)))))
+    (send shape moveTo: 0 r)
+    (send shape quadraticCurveTo: r r r 0)
+    (send shape quadraticCurveTo: r (- r) 0 (- r))
+    (send shape quadraticCurveTo: (- r) (- r) (- r) 0)
+    (send shape quadraticCurveTo: (- r) r 0 r)
+    (%new THREE.ExtrudeGeometry shape
+          (alist->object
+           `((steps: 40)
+             ;;(depth: 4)
+             (bevelEnabled: #f)
+             (extrudePath: ,curve)
+             )))))
 
 (define (place #!optional model)
   (let* ((cyl (cylinder))
@@ -745,6 +770,11 @@
 (define ease-in-out-cubic \easeInOutCubic)
 (define ease-in-out-quad \easeInOutQuad)
 
+;; function easeInOutCubic (t, b, c, d) {
+;;     if ((t /= d / 2) < 1) return c / 2 * t * t * t + b;
+;;     return c / 2 * ((t -= 2) * t * t + 2) + b;
+;; }
+
 
 
 
@@ -777,6 +807,23 @@
            ;;(opacity: .7)
            (vertexColors: #f)))))
 (extern "matcap0" matcap0)
+
+
+(define (imesh mesh)
+  (let ((im (%new THREE.InstancedMesh
+                  (slot mesh geometry:)
+                  (slot mesh material:)
+                  10000)))
+    (send (slot im instanceMatrix:) setUsage: \THREE.DynamicDrawUsage )
+    im))
+
+(define (imesh-matrix mesh n)
+  (let ((matrix (%new THREE.Matrix4)))
+    (send mesh getMatrixAt: n matrix)
+    matrix))
+
+(define (imesh-matrix-set! mesh n matrix)
+  (send mesh setMatrixAt: n matrix))
 
 
 (define (mcubes #!optional model)
@@ -996,7 +1043,143 @@
 (extern "sxfuck" sxfuck)
 
 
-(define (honk)
-  (##inline-host-expression "console.log('honk', @1@, @host2scm@(@1@))"
-                            gambit-log-function))
-(honk)
+(define CSG \CSG)
+
+(define (csg-operation geom csgop material)
+  (let ((op (%new CSG.Operation geom)))
+    (slot! op operation: csgop)
+    ;;(when (truthy? material)
+    (slot! op material: (or material *gridmaterial*))
+    op))
+
+(define (csg-operation-group ops)
+  (let ((og (%new CSG.OperationGroup)))
+    (apply send og add: ops)))
+
+(define (csg-addop geom #!optional material)
+  (csg-operation geom (slot CSG ADDITION:) material))
+
+(define (csg-subop geom #!optional material)
+  (csg-operation geom (slot CSG SUBTRACTION:) material))
+
+(define (csg-diffop geom #!optional material)
+  (csg-diffop geom (slot CSG DIFFERENCE:) material))
+
+(define (csg-intersectop geom #!optional material)
+  (csg-operation geom (slot CSG INTERSECTION:) material))
+
+(define (csg-brush geom)
+  (%new CSG.Brush geom))
+
+(define (csg-evaluator)
+  (let ((ev (%new CSG.Evaluator)))
+    (slot! ev useGroups: #t)
+    ev))
+
+(define (csg-evaluate-hier root)
+  (send (csg-evaluator) evaluateHierarchy: root))
+
+(define (csg-evaluate brush1 brush2 op)
+  (let ((mesh (%new THREE.Mesh)))
+    (send (csg-evaluator) evaluate: brush1 brush2 op mesh)
+    mesh))
+
+(define (csg-add brush1 brush2)
+  (csg-evaluate brush1 brush2 (slot CSG ADDITION:)))
+
+(define (csg-sub brush1 brush2)
+  (csg-evaluate brush1 brush2 (slot CSG SUBTRACTION:)))
+
+(define (csg-diff brush1 brush2)
+  (csg-evaluate brush1 brush2 (slot CSG DIFFERENCE:)))
+
+(define (csg-intersect brush1 brush2)
+  (csg-evaluate brush1 brush2 (slot CSG INTERSECTION:)))
+
+;; ADDITION, SUBTRACTION, DIFFERENCE, INTERSECTION
+
+(define (capsule-geom rad len)
+  (%new THREE.CapsuleGeometry rad len 4 10))
+
+(define (box-geom x y z)
+  (%new THREE.BoxGeometry x y z))
+
+(define (sphere-geom #!optional r)
+  (%new THREE.SphereGeometry))
+
+(define (tube-geom pts)
+  (let ((tb (tube)))
+    (send tb setpts: pts)
+    (slot tb geometry:)))
+
+(define initbvh \initbvh)
+(initbvh)
+
+(define xxx 0)
+
+(define (csg-position! op x y z)
+  (send (slot op position:) set: x y z)
+  op)
+
+(define *gridmaterial* (%new CSG.GridMaterial))
+;;(send (slot *gridmaterial* color:) set: #xbbcccc)
+
+(define (chunk #!optional model)
+  (let* ((bg (box-geom 4 4 4))
+         (cg (capsule-geom .8 .4))
+         (tg (tube-geom #(#(0 -3 0)
+                          #(0 3 0))))
+         (eg (extrusion-geom .4 '((0 -2.3 0) 
+                                  (0 -1 0)
+                                  (.5 0 0)
+                                  (0 1 0)
+                                  (0 2.3 0))))
+         (eg2 (extrusion-geom .3 '((-3 0 0)
+                                   (2 0 0))))
+         (mat (%new THREE.MeshStandardMaterial
+                    (alist->object '((color: #x997777)
+                                     (side: 2)
+                                     (transparent: #t)
+                                     (opacity: 0.6)))))
+         ;;(xg (csg-sub (csg-brush bg) (csg-brush eg)))
+         (xg (let ((root (csg-addop bg mat)))
+               (send root add:
+                     (csg-operation-group
+                      (list (csg-position! (csg-subop cg) 1 1.5 0)
+                            (csg-position! (csg-subop cg) 1 1 0)
+                            (csg-position! (csg-subop cg) -.3 0 0)
+                            (csg-subop eg)
+                            (csg-subop eg2))))
+               (csg-evaluate-hier root))))
+    ;;(slot! xg material: mat)
+    (slot! xg castShadow: #t)
+    (slot! xg receiveShadow: #t)
+    xg))
+
+(define (chunk2 #!optional model)
+  (let* ((bg (box-geom 8 3 3))
+         (rr (lambda () (* 1 (- (random-real) .5))))
+         (eg (extrusion-geom
+              .45 (map (lambda (i)
+                        (list (- i  4.5) (rr) (rr)))
+                      (iota 10))))
+         (eg2 (extrusion-geom
+               .55 (map (lambda (i)
+                          (list (- i  4.5) (rr) (rr)))
+                      (iota 10))))
+         (mat (%new THREE.MeshStandardMaterial
+                    (alist->object '((color: #x997777)
+                                     (side: 2)
+                                     (transparent: #t)
+                                     (opacity: 0.8)))))
+         (xg (let ((root (csg-addop bg mat)))
+               (send root add:
+                     (csg-operation-group
+                      (list (csg-subop eg2) (csg-addop eg))))
+               (csg-evaluate-hier root))))
+    (slot! xg castShadow: #t)
+    (slot! xg receiveShadow: #t)
+    xg))
+
+(extern "chunk" chunk)
+(extern "chunk2" chunk2)
