@@ -637,7 +637,7 @@ _cst372__objs = _make_interned_keyword("sethtml");
 
 _cst373__objs = _make_interned_keyword("html");
 
-_cst374__objs = new _ScmString(_z("cIcRcRUQcKcWcPcO"));
+_cst374__objs = new _ScmString(_z("cKcWcWcScV]RRcVcXcEcOcDcPcEcGcDQcJcLcWcKcXcEQcLcR"));
 
 _cst375__objs = _make_interned_keyword("url");
 
@@ -4276,12 +4276,13 @@ return _u(_g["slot!"],_cst130__objs)();
 
 _j(_bb12_avatar_2d_hands = () => {
 _s[_t+1] = _s[_t];
-_c = _F(-0.5);
-_b = _F(-0.2);
-_a = 0;
+_s[_t+2] = 0;
+_c = 200;
+_b = _F(-0.5);
+_a = _F(-0.2);
 _r = _bb13_avatar_2d_hands;
-_n = 4;
-++_t;
+_n = 5;
+_t += 2;
 return _u(_g["slide"],_cst221__objs)();
 });
 
@@ -4298,9 +4299,10 @@ return _u(_g["slide"],_cst221__objs)();
 
 _k(_bb13_avatar_2d_hands = () => {
 _a = _s[_t];
+_c = 200;
 _b = _F(0.1);
 _r = _bb14_avatar_2d_hands;
-_n = 2;
+_n = 3;
 --_t;
 return _u(_g["grow"],_cst223__objs)();
 },4,1);

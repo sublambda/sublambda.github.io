@@ -15,6 +15,7 @@
 #include "os.h"
 #include "os_setup.h"
 #include "os_base.h"
+#include "os_thread.h"
 #include "os_time.h"
 #include "os_files.h"
 #include "os_dyn.h"
@@ -2152,20 +2153,22 @@ end-of-code
             void
     "___set_gambitdir_map (___arg1);"))
 
-(define-prim ##get-module-search-order
-  (c-lambda ()
-            nonnull-UCS-2-string-list
-    "___return(___get_module_search_order ());"))
+(define-prim (##get-module-search-order)
+  (or ((c-lambda ()
+                 nonnull-UCS-2-string-list
+        "___return(___get_module_search_order ());"))
+      '()))
 
 (define-prim ##set-module-search-order!
   (c-lambda (nonnull-UCS-2-string-list)
             void
     "___set_module_search_order (___arg1);"))
 
-(define-prim ##get-module-whitelist
-  (c-lambda ()
-            nonnull-UCS-2-string-list
-    "___return(___get_module_whitelist ());"))
+(define-prim (##get-module-whitelist)
+  (or ((c-lambda ()
+                 nonnull-UCS-2-string-list
+        "___return(___get_module_whitelist ());"))
+      '()))
 
 (define-prim ##set-module-whitelist!
   (c-lambda (nonnull-UCS-2-string-list)
@@ -2206,10 +2209,11 @@ end-of-code
 
 ;;; CPU information.
 
-(define-prim (##cpu-count)
+(define-prim (##cpu-count #!optional (level -1))
   (##declare (not interrupts-enabled))
   (##c-code
-   "___RESULT = ___FIX(___cpu_count ());"))
+   "___RESULT = ___FIX(___cpu_count (___INT(___ARG1)));"
+   level))
 
 (define-prim (##cpu-cache-size
               #!optional
@@ -4299,9 +4303,6 @@ end-of-code
 
 (define ##err-code-unimplemented
   (##c-code "___RESULT = ___FIX(___UNIMPL_ERR);"))
-
-(define ##max-char
-  (##c-code "___RESULT = ___FIX(___MAX_CHR);"))
 
 (define ##min-fixnum
   (##c-code "___RESULT = ___FIX(___MIN_FIX);"))

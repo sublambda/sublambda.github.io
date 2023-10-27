@@ -2,7 +2,7 @@
 
 ;;; File: "_repl.scm"
 
-;;; Copyright (c) 1994-2022 by Marc Feeley, All Rights Reserved.
+;;; Copyright (c) 1994-2023 by Marc Feeley, All Rights Reserved.
 
 ;;;============================================================================
 
@@ -3692,7 +3692,9 @@
                 (begin
                   (##write-string ", " port)
                   (##write (##cdr arg-id) port)))
-            (##write-string ") " port)))))
+            (##write-string ") " port))
+          (begin
+            (##write-string "(Return value) " port)))))
 
   (define-prim (display-known-exception exc)
 
@@ -3987,7 +3989,7 @@
                    (##write-string "Instance of " port)
                    (##write type-id port))
                  (let ((x
-                        (##assq (macro-type-exception-type-id exc)
+                        (##assq type-id
                                 ##type-exception-names)))
                    (##write-string (if x (##cdr x) "Unknown type") port))))
            (##write-string " expected" port)
@@ -4057,18 +4059,18 @@
             (display-known-exception exc)))
       (display-known-exception exc)))
 
-(define-prim (##value->string val expr max-length char-encoding-limit)
+(define-prim (##value->string val expr max-length max-unescaped-char)
   (if ##values-with-sn?
       (##object->string-with-sn
        expr
        max-length
-       char-encoding-limit
+       max-unescaped-char
        3 ;; at least "..."
        val)
       (##object->string
        expr
        max-length
-       char-encoding-limit)))
+       max-unescaped-char)))
 
 (define-prim (##exception-procedure-and-arguments exc)
 

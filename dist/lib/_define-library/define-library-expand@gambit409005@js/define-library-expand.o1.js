@@ -18105,7 +18105,8 @@ return _bb2___define_2d_library_2f_define_2d_library_2d_expand_23_import_2d_expa
 },-1,_cst112____define_2d_library_2f_define_2d_library_2d_expand,!1,!1);
 
 _j(_bb2___define_2d_library_2f_define_2d_library_2d_expand_23_import_2d_expand = () => {
-_b = new _Box(null);
+_b = new _Box(void 0);
+_b.a = null;
 _s[_t+1] = _r;
 _s[_t+2] = _a;
 _s[_t+3] = _b;

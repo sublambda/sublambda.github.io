@@ -302,8 +302,8 @@
           (slide hands 0 -.32 -.5)
           (send (slot hands scale:) set: .01 .01 .01))
       (begin
-        (slide hands 0 -.2 -.5)
-        (grow hands .1)))
+        (slide hands 0 -.2 -.5 200)
+        (grow hands .1 200)))
     (when #f
       (let ((specs (sogltf "glasses.glb")))
         (send b add: specs)
@@ -321,10 +321,6 @@
 
 
 (define vidbox \vidbox)
-
-"https://rx.0x.no:8401/stuff/enaudi-night.mp4"
-"https://rx.0x.no:8401/stuff/kf-hex.mp4"
-"https://rx.0x.no:8401/stuff/kf-skyline.mp4"
 
 (define (vbox #!optional model)
   (let* ((vb (vidbox "https://meat.local/Hegre%20ariel%20hegre%20hegre%20art-3yqpc.mp4"))
@@ -522,7 +518,7 @@
                            (draw-html html canvas)
                            (update-texture)))
 
-    (send mesh seturl: "foo2.html")
+    (send mesh seturl: "https://sublambda.github.io")
 
     mesh))
 

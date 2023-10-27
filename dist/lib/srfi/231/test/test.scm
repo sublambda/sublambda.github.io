@@ -169,7 +169,7 @@ OTHER DEALINGS IN THE SOFTWARE.
       (test-random-integer (+ a 1))))
 
 (define (random-char)
-  (let ((n (random-inclusive ##max-char)))
+  (let ((n (random-inclusive (##max-char-code))))
     (if (or (fx< n #xd800)
             (fx< #xdfff n))
         (integer->char n)
@@ -1863,7 +1863,7 @@ OTHER DEALINGS IN THE SOFTWARE.
    (list f16-storage-class       1.0)
    (list f32-storage-class       1.0)
    (list f64-storage-class       1.0)
-   (list char-storage-class (integer->char ##max-char))
+   (list char-storage-class (integer->char (##max-char-code)))
    (list c64-storage-class  1.0+1.0i)
    (list c128-storage-class 1.0+1.0i)))
 
@@ -6506,13 +6506,13 @@ OTHER DEALINGS IN THE SOFTWARE.
 (let ((A (make-specialized-array (make-interval '#(5 5 5 5 5) '#(8 8 8 8 8))))
       (B (make-specialized-array (make-interval '#(5 5 5 5 5)))))
   (test (array-ref A 0 0)
-        "Wrong number of arguments passed to procedure ")
+        "array-getter: multi-index is not the correct dimension: ")
   (test (array-set! A 2 0 0)
-        "Wrong number of arguments passed to procedure ")
+        "array-setter: multi-index is not the correct dimension: ")
   (test (array-ref B 0 0)
-        "Wrong number of arguments passed to procedure ")
+        "array-getter: multi-index is not the correct dimension: ")
   (test (array-set! B 2 0 0)
-        "Wrong number of arguments passed to procedure "))
+        "array-setter: multi-index is not the correct dimension: "))
 
 (pp "Test interactions of continuations and array-{copy|append|stack|decurry|block}")
 

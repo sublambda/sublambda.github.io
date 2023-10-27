@@ -344,24 +344,27 @@
       }
 
       .squiggle {
-        animation: squigglevision 0.6s infinite;
+      //animation: squigglevision 0.6s infinite;
       }
 
       #no {
         width: 100%;
         height: 100%;
         z-index: 1;
-        line-height: 1.5;
+        line-height: 2.5;
         text-shadow: 1px 1px 10px black;
         color: rgba(200,200,200,.5);
-        font-size: 400px;
+        font-size: 200px;
+//      font-family: monospace;
         position: absolute;
         transition: 1s;
         transition-delay: 1s;
         background: #bbbbb0;
-        padding: 20px;
+//        padding: 20px;
+      padding-top: 120px;
+      padding-left: 300px;
         //transform: scale(-1);
-        text-align: center;
+        text-align: left;
         visibilty: hidden;
       }
 
@@ -376,7 +379,7 @@
 
     </style>
 
-    <script src="out.js"></script>
+    <script xxasync xxdefer src="out.js"></script>
 
   </head>
 
@@ -430,10 +433,14 @@
     <div id="leftbuttons" class="buttontray"> </div>
 
     <img id="img0" class="image">
-    <div id="status" class="status">status</div>
+    <div id="status" class="status">[]</div>
 
-    <!--
+<!--
     <div id="no" class=squiggle>
+      uh...
+    D̴̨̤͉̻̀̈́̽͗O̵̪̬̍̈́̀N̸̞̆̚'̴̢̰̫̈́T̸͈̥̤̊̏͒ ̷̺̋͑͋͝L̶̝̝͠Ö̴̬Ò̸̃̄͜K̸̲̐ ̸͔̅A̸̟̟̹̣̎̾T̵̹̊̀̕ ̵̜͙͛̈́İ̸̛̳̟͘T̷̞̰̫̳̑̾
+    <br>
+      f̸̗̎ú̴̩c̷̖ḳ̵̀
       f̸̗̎ú̴̩c̷̖ḳ̵̀
       f̸̗̎ú̴̩c̷̖͌ḳ̵̀
       <br>
@@ -447,16 +454,14 @@
 
     <script type="text/javascript">
       setTimeout(()=>document.getElementById("no").style.opacity=0,1);
-      //let t0 = Date.now(),
-      //div = document.getElementById("no"),
-      //up = setInterval(()=>div.innerHTML=Date.now()-t0, 20);
+      let div = document.getElementById("no"),
+          up = 0 //setInterval(()=>div.innerHTML=(Date.now()-t0)/1000, 100);
       setTimeout(()=> {
         document.getElementById("no").remove();
-        //clearInterval(up);
-      }, 2000);
+        clearInterval(up);
+      }, 2500);
     </script>
-
-    -->
+-->
 
 </div>
 

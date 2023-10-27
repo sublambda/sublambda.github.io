@@ -2,8 +2,8 @@
 
 ;;; File: "_num.scm"
 
-;;; Copyright (c) 1994-2022 by Marc Feeley, All Rights Reserved.
-;;; Copyright (c) 2004-2022 by Brad Lucier, All Rights Reserved.
+;;; Copyright (c) 1994-2023 by Marc Feeley, All Rights Reserved.
+;;; Copyright (c) 2004-2023 by Brad Lucier, All Rights Reserved.
 
 ;;;============================================================================
 
@@ -2485,6 +2485,8 @@
     x
     (let ((num (macro-ratnum-numerator x))
           (den (macro-ratnum-denominator x)))
+      ;; Here we allow x to not be normalized,
+      ;; but assume den is positive.
       (if (##negative? num)
           (##quotient (##- num (##- den 1)) den)
           (##quotient num den)))
@@ -3032,7 +3034,7 @@ for a discussion of branch cuts.
         (if (##negative? (macro-ratnum-numerator x))
             (negative-log)
             (exact-log x))
-        (if (or (##flnan? x)
+        (if (or (##flnan? x)         ;; this treatment matches R7RS and SBCL
                 (##not (##flnegative?
                         (##flcopysign (macro-inexact-+1) x))))
             (##fllog x)
@@ -3257,6 +3259,7 @@ for a discussion of branch cuts.
   (cond ((or (and (##flonum? x) (##flnan? x))
              (and (##flonum? y) (##flnan? y)))
          (macro-inexact-+nan))
+        ;; No NaNs
         ((##eqv? 0 y)
          (if (##exact? x)
              (if (##negative? x)
@@ -3265,6 +3268,15 @@ for a discussion of branch cuts.
              (if (##negative? (##flcopysign (macro-inexact-+1) x))
                  (macro-inexact-+pi)
                  (macro-inexact-+0))))
+        ;; y is not exact zero
+        ((eqv? x 0)                  ;; match R7RS
+         (cond ((##flonum? y)
+                (##flcopysign (macro-inexact-+pi/2) y))
+               ((##negative? y)
+                (macro-inexact--pi/2))
+               (else
+                (macro-inexact-+pi/2))))
+        ;; neither x nor y is exact zero
         ((and (##not (##finite? x))
               (##not (##finite? y)))
          (if (##positive? x)
@@ -3442,13 +3454,19 @@ for a discussion of branch cuts.
           ((##< x -1)
            (macro-if-cpxnum
             (##make-rectangular
-             (##fl/ (##fllog1p (##exact->inexact (##/ (##* 4 x)
-                                                      (##square (##- x 1)))))
+             (##fl/ (if (or (##exact? x)
+                            (not (##fl= x (##fl- x (macro-inexact-+1)))))
+                        (let ((x (##inexact->exact x)))
+                          (##log (##+ 1 (##/ (##* 4 x)
+                                             (##square (##- x 1))))))
+                        (##fllog1p (##fl/ (macro-inexact-+4) x)))
                     (macro-inexact-+4))
              (macro-inexact-+pi/2))
             (range-error)))
+          ((##exact? x)
+           (##* (macro-inexact-+1/2) (##log (##/ (##+ 1 x) (##- 1 x)))))
           (else
-           (##flatanh (##exact->inexact x)))))
+           (##flatanh x))))
 
   (macro-number-dispatch x (type-error)
     (case x
@@ -12023,8 +12041,10 @@ end-of-code
             (##arithmetic-shift (##+ num (if (##positive? num) 1 -1)) -1)
             (##arithmetic-shift (##arithmetic-shift (##+ num 1) -2) 1))
         ;; here the ratnum cannot have fractional part = 1/2
+        ;; The ratnum we make here may not be normalized, but
+        ;; ##floor still handles it correctly.
         (##floor
-         (##ratnum.normalize
+         (macro-ratnum-make
           (##+ (##arithmetic-shift num 1) den)
           (##arithmetic-shift den 1))))))
 
