@@ -1,19 +1,16 @@
-(uptime "objs")
-
-(##include "~~lib/_gambit#.scm")  
+(declare
+ (extended-bindings)
+ (standard-bindings)
+ (block)
+ )
 
 (import (_six js))
 (import (srfi 28))                      ;format
 (import (srfi 69))                      ;hashtable
 ;(import _match)
 
+(##include "~~lib/_gambit#.scm")  
 (include "macros.scm")
-
-(declare
- (extended-bindings)
- (standard-bindings)
- (block)
- )
 
 
 (define (extern name obj)
@@ -165,8 +162,6 @@
 (define (import-tone)
   (dynamic-import "https://unpkg.com/tone@14.7.77/build/Tone.js"))
 
-;;(import-tone)
-
 (define (tone n)
   (let ((synth (%new Tone.Synth)))
     (set! synth (send synth toDestination:))
@@ -174,10 +169,6 @@
 
 (define (trigger-attack-release p #!optional (q .1))
   (send (synth) triggerAttackRelease: p q))
-
-(define tar trigger-attack-release)
-
-(extern "tar" tar)
 
 (define (synth)
   (send (%new Tone.Synth) toDestination:))
@@ -290,10 +281,10 @@
 (define console-log \console.log)
 
 (define (avatar-hands #!optional model)
-  (let* ((b (box .04 1 .04))
+  (let* ((b (capsule .06 .7))
          (mat (slot b material:))
          (hands (sogltf "handsbw.glb")))
-    (send (slot hands position:) set: 0 0 10)
+    (send (slot hands position:) set: 0 0 2)
     (send (slot hands scale:) set: .05 .05 .05)
     (send b add: hands)
     (if (is-embedded?)

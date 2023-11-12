@@ -1,4 +1,3 @@
-(uptime "util")
 
 (declare
  (extended-bindings)
@@ -451,9 +450,6 @@
 
 (addbutton "3"
            (lambda (e)
-             (hey "tone c34")
-             ;;(tar c2: .01)
-             ;;(set-timeout (lambda () (tar c2: .01)) 100)
              (if (truthy? (slot lim composer:))
                  (composer #f)
                (composer #t))))
