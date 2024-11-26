@@ -27,7 +27,7 @@ _cst11____pkg = _i("##path-directory");
 
 _cst12____pkg = _i("##path-strip-trailing-directory-separator");
 
-_cst14____pkg = new _Structure([null,_i("##type-5"),_i("type"),8,!1,[_i("id"),1,!1,_i("name"),5,!1,_i("flags"),5,!1,_i("super"),5,!1,_i("fields"),5,!1]]);
+_cst14____pkg = new _Structure([null,_i("##type-5"),_i("type"),26,!1,[_i("id"),1,!1,_i("name"),5,!1,_i("flags"),5,!1,_i("super"),5,!1,_i("fields"),5,!1]]);
 
 _cst23____pkg = _i("##type-1-65615C63-2EC3-43F7-89C2-ADC230DFD651");
 

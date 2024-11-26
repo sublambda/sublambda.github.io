@@ -3,7 +3,7 @@
 
 _cst6____zlib = _i("name");
 
-_cst1____zlib = new _Structure([null,_i("##type-5"),_i("type"),8,!1,[_i("id"),1,!1,_cst6____zlib,5,!1,_i("flags"),5,!1,_i("super"),5,!1,_i("fields"),5,!1]]);
+_cst1____zlib = new _Structure([null,_i("##type-5"),_i("type"),26,!1,[_i("id"),1,!1,_cst6____zlib,5,!1,_i("flags"),5,!1,_i("super"),5,!1,_i("fields"),5,!1]]);
 
 _cst0____zlib = new _Structure([_cst1____zlib,_i("##type-1-CA726F64-BF31-4501-9A9A-E1C1F0438DBB"),_i("zlib-exception"),29,!1,[_i("message"),18,!1]]);
 

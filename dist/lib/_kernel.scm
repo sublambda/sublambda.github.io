@@ -2360,12 +2360,27 @@ k = ___ps->saved[0];
 fill = ___ps->saved[1];
 ___ps->saved[0] = ___VOID;
 ___ps->saved[1] = ___VOID;
+if (fill == ___ABSENT)
+  fill = ___FIX(0);
 if (!___FIXNUMP(result))
   {
-    if (fill == ___ABSENT)
-      fill = ___FIX(0);
+#ifdef ___USE_SCHEME_VECTOR_OPS
     for (i=0; i<n; i++)
       ___VECTORSET(result,___FIX(i),fill)
+#else
+    ___SCMOBJ *body = ___CAST(___SCMOBJ*, ___BODY_AS(result,___tSUBTYPED));
+    if (___CAST_U8(fill) * (~___CAST(___UWORD,0)/0xff) ==
+        ___CAST(___UWORD,fill)) /* repetition of identical bytes? */
+      {
+        /* it is usually faster to initialize an array with memset */
+        memset(body, ___CAST_U8(fill), n * sizeof (*body));
+      }
+    else
+      {
+        for (i=0; i<n; i++)
+          body[i] = fill;
+      }
+#endif
   }
 ___RESULT = result;
 ___PUSH_ARGS2(k,fill);
@@ -2436,8 +2451,24 @@ ___ps->saved[0] = ___VOID;
 ___ps->saved[1] = ___VOID;
 if (!___FIXNUMP(result) && fill != ___ABSENT)
   {
+#ifdef ___USE_SCHEME_VECTOR_OPS
     for (i=0; i<n; i++)
-      ___STRINGSET(result,___FIX(i),fill);
+      ___STRINGSET(result,___FIX(i),fill)
+#else
+    ___C f = ___INT(fill);
+    ___C *body = ___CAST(___C*, ___BODY_AS(result,___tSUBTYPED));
+    if (___CAST_U8(f) * (~___CAST(___C,0)/0xff) ==
+        f) /* repetition of identical bytes? */
+      {
+        /* it is usually faster to initialize an array with memset */
+        memset(body, ___CAST_U8(f), n * sizeof (*body));
+      }
+    else
+      {
+        for (i=0; i<n; i++)
+          body[i] = f;
+      }
+#endif
   }
 ___RESULT = result;
 ___PUSH_ARGS2(k,fill);
@@ -2508,8 +2539,15 @@ ___ps->saved[0] = ___VOID;
 ___ps->saved[1] = ___VOID;
 if (!___FIXNUMP(result) && fill != ___ABSENT)
   {
+#ifdef ___USE_SCHEME_VECTOR_OPS
     for (i=0; i<n; i++)
-      ___U8VECTORSET(result,___FIX(i),fill);
+      ___U8VECTORSET(result,___FIX(i),fill)
+#else
+    ___U8 f = ___INT(fill);
+    ___U8 *body = ___CAST(___U8*, ___BODY_AS(result,___tSUBTYPED));
+    /* it is usually faster to initialize an array with memset */
+    memset(body, f, n * sizeof (*body));
+#endif
   }
 ___RESULT = result;
 ___PUSH_ARGS2(k,fill);
@@ -2581,8 +2619,15 @@ ___ps->saved[0] = ___VOID;
 ___ps->saved[1] = ___VOID;
 if (!___FIXNUMP(result) && fill != ___ABSENT)
   {
+#ifdef ___USE_SCHEME_VECTOR_OPS
     for (i=0; i<n; i++)
-      ___S8VECTORSET(result,___FIX(i),fill);
+      ___S8VECTORSET(result,___FIX(i),fill)
+#else
+    ___S8 f = ___INT(fill);
+    ___S8 *body = ___CAST(___S8*, ___BODY_AS(result,___tSUBTYPED));
+    /* it is usually faster to initialize an array with memset */
+    memset(body, ___CAST_U8(f), n * sizeof (*body));
+#endif
   }
 ___RESULT = result;
 ___PUSH_ARGS2(k,fill);
@@ -2654,8 +2699,24 @@ ___ps->saved[0] = ___VOID;
 ___ps->saved[1] = ___VOID;
 if (!___FIXNUMP(result) && fill != ___ABSENT)
   {
+#ifdef ___USE_SCHEME_VECTOR_OPS
     for (i=0; i<n; i++)
-      ___U16VECTORSET(result,___FIX(i),fill);
+      ___U16VECTORSET(result,___FIX(i),fill)
+#else
+    ___U16 f = ___INT(fill);
+    ___U16 *body = ___CAST(___U16*, ___BODY_AS(result,___tSUBTYPED));
+    if (___CAST_U8(f) * (~___CAST(___U16,0)/0xff) ==
+        ___CAST_U16(f)) /* repetition of identical bytes? */
+      {
+        /* it is usually faster to initialize an array with memset */
+        memset(body, ___CAST_U8(f), n * sizeof (*body));
+      }
+    else
+      {
+        for (i=0; i<n; i++)
+          body[i] = f;
+      }
+#endif
   }
 ___RESULT = result;
 ___PUSH_ARGS2(k,fill);
@@ -2727,8 +2788,24 @@ ___ps->saved[0] = ___VOID;
 ___ps->saved[1] = ___VOID;
 if (!___FIXNUMP(result) && fill != ___ABSENT)
   {
+#ifdef ___USE_SCHEME_VECTOR_OPS
     for (i=0; i<n; i++)
-      ___S16VECTORSET(result,___FIX(i),fill);
+      ___S16VECTORSET(result,___FIX(i),fill)
+#else
+    ___S16 f = ___INT(fill);
+    ___S16 *body = ___CAST(___S16*, ___BODY_AS(result,___tSUBTYPED));
+    if (___CAST_U8(f) * (~___CAST(___U16,0)/0xff) ==
+        ___CAST_U16(f)) /* repetition of identical bytes? */
+      {
+        /* it is usually faster to initialize an array with memset */
+        memset(body, ___CAST_U8(f), n * sizeof (*body));
+      }
+    else
+      {
+        for (i=0; i<n; i++)
+          body[i] = f;
+      }
+#endif
   }
 ___RESULT = result;
 ___PUSH_ARGS2(k,fill);
@@ -2800,8 +2877,24 @@ ___ps->saved[0] = ___VOID;
 ___ps->saved[1] = ___VOID;
 if (!___FIXNUMP(result) && fill != ___ABSENT)
   {
+#ifdef ___USE_SCHEME_VECTOR_OPS
     for (i=0; i<n; i++)
-      ___U32VECTORSET(result,___FIX(i),fill);
+      ___U32VECTORSET(result,___FIX(i),fill)
+#else
+    ___U32 f = ___U32UNBOX(fill);
+    ___U32 *body = ___CAST(___U32*, ___BODY_AS(result,___tSUBTYPED));
+    if (___CAST_U8(f) * (~___CAST(___U32,0)/0xff) ==
+        ___CAST_U32(f)) /* repetition of identical bytes? */
+      {
+        /* it is usually faster to initialize an array with memset */
+        memset(body, ___CAST_U8(f), n * sizeof (*body));
+      }
+    else
+      {
+        for (i=0; i<n; i++)
+          body[i] = f;
+      }
+#endif
   }
 ___RESULT = result;
 ___PUSH_ARGS2(k,fill);
@@ -2873,8 +2966,24 @@ ___ps->saved[0] = ___VOID;
 ___ps->saved[1] = ___VOID;
 if (!___FIXNUMP(result) && fill != ___ABSENT)
   {
+#ifdef ___USE_SCHEME_VECTOR_OPS
     for (i=0; i<n; i++)
-      ___S32VECTORSET(result,___FIX(i),fill);
+      ___S32VECTORSET(result,___FIX(i),fill)
+#else
+    ___S32 f = ___S32UNBOX(fill);
+    ___S32 *body = ___CAST(___S32*, ___BODY_AS(result,___tSUBTYPED));
+    if (___CAST_U8(f) * (~___CAST(___U32,0)/0xff) ==
+        ___CAST_U32(f)) /* repetition of identical bytes? */
+      {
+        /* it is usually faster to initialize an array with memset */
+        memset(body, ___CAST_U8(f), n * sizeof (*body));
+      }
+    else
+      {
+        for (i=0; i<n; i++)
+          body[i] = f;
+      }
+#endif
   }
 ___RESULT = result;
 ___PUSH_ARGS2(k,fill);
@@ -2955,8 +3064,24 @@ ___ps->saved[0] = ___VOID;
 ___ps->saved[1] = ___VOID;
 if (!___FIXNUMP(result) && fill != ___ABSENT)
   {
+#ifdef ___USE_SCHEME_VECTOR_OPS
     for (i=0; i<n; i++)
-      ___U64VECTORSET(result,___FIX(i),fill);
+      ___U64VECTORSET(result,___FIX(i),fill)
+#else
+    ___U64 f = ___U64UNBOX(fill);
+    ___U64 *body = ___CAST(___U64*, ___BODY_AS(result,___tSUBTYPED));
+    if (___CAST_U8(f) * (~___CAST(___U64,0)/0xff) ==
+        ___CAST_U64(f)) /* repetition of identical bytes? */
+      {
+        /* it is usually faster to initialize an array with memset */
+        memset(body, ___CAST_U8(f), n * sizeof (*body));
+      }
+    else
+      {
+        for (i=0; i<n; i++)
+          body[i] = f;
+      }
+#endif
   }
 ___RESULT = result;
 ___PUSH_ARGS2(k,fill);
@@ -3037,8 +3162,24 @@ ___ps->saved[0] = ___VOID;
 ___ps->saved[1] = ___VOID;
 if (!___FIXNUMP(result) && fill != ___ABSENT)
   {
+#ifdef ___USE_SCHEME_VECTOR_OPS
     for (i=0; i<n; i++)
-      ___S64VECTORSET(result,___FIX(i),fill);
+      ___S64VECTORSET(result,___FIX(i),fill)
+#else
+    ___S64 f = ___S64UNBOX(fill);
+    ___S64 *body = ___CAST(___S64*, ___BODY_AS(result,___tSUBTYPED));
+    if (___CAST_U8(f) * (~___CAST(___U64,0)/0xff) ==
+        ___CAST_U64(f)) /* repetition of identical bytes? */
+      {
+        /* it is usually faster to initialize an array with memset */
+        memset(body, ___CAST_U8(f), n * sizeof (*body));
+      }
+    else
+      {
+        for (i=0; i<n; i++)
+          body[i] = f;
+      }
+#endif
   }
 ___RESULT = result;
 ___PUSH_ARGS2(k,fill);
@@ -3110,9 +3251,23 @@ ___ps->saved[0] = ___VOID;
 ___ps->saved[1] = ___VOID;
 if (!___FIXNUMP(result) && fill != ___ABSENT)
   {
-    ___F64 fill_f64 = ___F64UNBOX(fill);
+    ___F32 f = ___F64UNBOX(fill);
+#ifdef ___USE_SCHEME_VECTOR_OPS
     for (i=0; i<n; i++)
-      ___F32VECTORSET(result,___FIX(i),fill_f64);
+      ___F32VECTORSET(result,___FIX(i),f)
+#else
+    ___F32 *body = ___CAST(___F32*, ___BODY_AS(result,___tSUBTYPED));
+    if (f == 0.0 && ___copysign (1.0, f) > 0.0) /* detect positive 0 */
+      {
+        /* it is usually faster to initialize an array with memset */
+        memset(body, 0, n * sizeof (*body));
+      }
+    else
+      {
+        for (i=0; i<n; i++)
+          body[i] = f;
+      }
+#endif
   }
 ___RESULT = result;
 ___PUSH_ARGS2(k,fill);
@@ -3192,9 +3347,23 @@ ___ps->saved[0] = ___VOID;
 ___ps->saved[1] = ___VOID;
 if (!___FIXNUMP(result) && fill != ___ABSENT)
   {
-    ___F64 fill_f64 = ___F64UNBOX(fill);
+    ___F64 f = ___F64UNBOX(fill);
+#ifdef ___USE_SCHEME_VECTOR_OPS
     for (i=0; i<n; i++)
-      ___F64VECTORSET(result,___FIX(i),fill_f64);
+      ___F64VECTORSET(result,___FIX(i),f)
+#else
+    ___F64 *body = ___CAST(___F64*, ___BODY_AS(result,___tSUBTYPED));
+    if (f == 0.0 && ___copysign (1.0, f) > 0.0) /* detect positive 0 */
+      {
+        /* it is usually faster to initialize an array with memset */
+        memset(body, 0, n * sizeof (*body));
+      }
+    else
+      {
+        for (i=0; i<n; i++)
+          body[i] = f;
+      }
+#endif
   }
 ___RESULT = result;
 ___PUSH_ARGS2(k,fill);
@@ -4790,6 +4959,12 @@ end-of-code
             scheme-object
    "___os_device_tty_text_attributes_set"))
 
+(define-prim ##os-device-tty-capability
+  (c-lambda (scheme-object
+             scheme-object)
+            scheme-object
+   "___os_device_tty_capability"))
+
 (define-prim ##os-device-tty-history
   (c-lambda (scheme-object)
             scheme-object
@@ -5213,7 +5388,8 @@ end-of-code
 ;;
 ;;   (define-type type
 ;;     id: ...special-type...
-;;     (id      unprintable: equality-test:)
+;;     extender: ...
+;;     (id      unprintable:)
 ;;     (name    unprintable: equality-skip:)
 ;;     (flags   unprintable: equality-skip:)
 ;;     (super   unprintable: equality-skip:)
@@ -5226,7 +5402,7 @@ end-of-code
           #f ;; this structure's type descriptor is itself! (set later)
           '##type-5
           'type
-          '8
+          '26 ;; extensible|concrete|nongenerative
           '#f
           '#(id 1 #f name 5 #f flags 5 #f super 5 #f fields 5 #f))))
     (##structure-type-set! type-type type-type) ;; self reference
@@ -5264,7 +5440,7 @@ end-of-code
                   (loop super)))))))
 
 (define-prim (##type? obj)
-  (##structure-direct-instance-of? obj (##type-id ##type-type)))
+  (##structure-instance-of? obj (##type-id ##type-type)))
 
 (define-prim (##structure-type obj)
   (##vector-ref obj 0))
@@ -5470,7 +5646,7 @@ end-of-code
 
 (define-prim (##register-module-descrs module-descrs)
   (let loop1 ((i 0)
-              (preload-module-refs '()))
+              (rev-preload-module-refs '()))
     (if (##fx< i (##vector-length module-descrs))
         (let* ((module-descr
                 (##vector-ref module-descrs i))
@@ -5483,11 +5659,11 @@ end-of-code
                   (loop2 (##fx+ j 1)))))
           (loop1 (##fx+ i 1)
                  (if (##fx= (##fxand 1 (macro-module-descr-flags module-descr))
-                            0)
-                     preload-module-refs
+                            0) ;; preload flag is off?
+                     rev-preload-module-refs
                      (##cons (##vector-last module-refs)
-                             preload-module-refs))))
-        (##reverse! preload-module-refs))))
+                             rev-preload-module-refs))))
+        (##reverse! rev-preload-module-refs))))
 
 (implement-library-type-module-not-found-exception)
 
@@ -5520,7 +5696,7 @@ end-of-code
                                 #!optional
                                 (level 999999)) ;; init up to highest level
 
-  (define visited '()) ;; modules visited to correctly handle circular deps
+  (define visited '()) ;; modules visited to correctly handle shared deps
 
   (define (visited! module-ref)
     (set! visited (##cons module-ref visited)))
@@ -5532,47 +5708,43 @@ end-of-code
               (loop (##cdr lst)))
           #f)))
 
-  (define (get-modules module-refs)
+  (define (visit module-ref rev-collected-modules)
+    (if (visited? module-ref)
+        rev-collected-modules
+        (let ((module (##get-module module-ref)))
+          (visited! module-ref)
+          (if (and module
+                   (##fx< (macro-module-stage module) level))
+              (let ((dependencies (macro-module-descr-demand-modules
+                                    (macro-module-module-descr module))))
+                (let loop ((i 0)
+                           (rev-collected-modules rev-collected-modules))
+                  (if (##fx< i (##vector-length dependencies))
+                      (loop (##fx+ i 1)
+                            (visit (##vector-ref dependencies i)
+                                   rev-collected-modules))
+                      (##cons module rev-collected-modules))))))))
 
-    (define (add-module module-ref result)
-      (if (visited? module-ref)
-          result
-          (let ((module (##get-module module-ref)))
-            (visited! module-ref)
-            (if (and module
-                     (##fx< (macro-module-stage module) level))
-                (##cons module result)
-                result))))
-
+  (define (collect module-refs rev-collected-modules)
     (if (##vector? module-refs)
 
         (let loop ((i 0)
-                   (result '()))
+                   (rev-collected-modules rev-collected-modules))
           (if (##fx< i (##vector-length module-refs))
               (loop (##fx+ i 1)
-                    (add-module (##vector-ref module-refs i) result))
-              result))
+                    (visit (##vector-ref module-refs i)
+                           rev-collected-modules))
+              (##reverse! rev-collected-modules)))
 
-        (let loop ((lst module-refs)
-                   (result '()))
-          (if (##pair? lst)
-              (loop (##cdr lst)
-                    (add-module (##car lst) result))
-              result))))
+        (let loop ((probe module-refs)
+                   (rev-collected-modules rev-collected-modules))
+          (if (##pair? probe)
+              (loop (##cdr probe)
+                    (visit (##car probe)
+                           rev-collected-modules))
+              (##reverse! rev-collected-modules)))))
 
-  (define (collect module-refs collected-modules)
-    (let loop ((modules (##reverse! (get-modules module-refs)))
-               (collected-modules collected-modules))
-      (if (##pair? modules)
-          (loop (##cdr modules)
-                (let ((module (##car modules)))
-                  (##cons module
-                          (collect (macro-module-descr-demand-modules
-                                    (macro-module-module-descr module))
-                                   collected-modules))))
-          collected-modules)))
-
-  (##reverse! (collect module-refs '())))
+  (collect module-refs '()))
 
 (define-prim (##init-modules modules
                              #!optional
@@ -5613,7 +5785,7 @@ end-of-code
 (define-prim (##load-module module-ref
                             #!optional
                             (level (macro-module-last-init-stage)))
-  (##load-modules (##vector module-ref) level))
+  (##load-modules (##list module-ref) level))
 
 (define-prim (##load-vm)
   (let* ((module-descrs

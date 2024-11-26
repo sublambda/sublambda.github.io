@@ -3,7 +3,7 @@
 
 _cst10____hamt = _i("##type-4-A8E85030-3E96-4AD5-B257-73B99DCBD137");
 
-_cst0____hamt = new _Structure([new _Structure([null,_i("##type-5"),_i("type"),8,!1,[_i("id"),1,!1,_i("name"),5,!1,_i("flags"),5,!1,_i("super"),5,!1,_i("fields"),5,!1]]),_cst10____hamt,_i("hamt"),28,!1,[_i("test"),1,!1,_i("hash"),1,!1,_i("tree"),1,!1,_i("length"),1,!1]]);
+_cst0____hamt = new _Structure([new _Structure([null,_i("##type-5"),_i("type"),26,!1,[_i("id"),1,!1,_i("name"),5,!1,_i("flags"),5,!1,_i("super"),5,!1,_i("fields"),5,!1]]),_cst10____hamt,_i("hamt"),28,!1,[_i("test"),1,!1,_i("hash"),1,!1,_i("tree"),1,!1,_i("length"),1,!1]]);
 
 _cst17____hamt = _i("##raise-type-exception");
 

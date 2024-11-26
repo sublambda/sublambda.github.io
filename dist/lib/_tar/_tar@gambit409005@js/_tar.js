@@ -11,7 +11,7 @@ _cst6____tar = _i("type");
 
 _cst9____tar = _i("name");
 
-_cst4____tar = new _Structure([null,_i("##type-5"),_cst6____tar,8,!1,[_i("id"),1,!1,_cst9____tar,5,!1,_i("flags"),5,!1,_i("super"),5,!1,_i("fields"),5,!1]]);
+_cst4____tar = new _Structure([null,_i("##type-5"),_cst6____tar,26,!1,[_i("id"),1,!1,_cst9____tar,5,!1,_i("flags"),5,!1,_i("super"),5,!1,_i("fields"),5,!1]]);
 
 _cst3____tar = new _Structure([_cst4____tar,_cst1____tar,_i("tar-rec"),29,!1,[_cst9____tar,18,!1,_i("mode"),18,!1,_i("uid"),18,!1,_i("gid"),18,!1,_i("mtime"),18,!1,_cst6____tar,18,!1,_i("linkname"),18,!1,_i("uname"),18,!1,_i("gname"),18,!1,_i("devmajor"),18,!1,_i("devminor"),18,!1,_i("atime"),18,!1,_i("ctime"),18,!1,_i("content"),17,!1]]);
 

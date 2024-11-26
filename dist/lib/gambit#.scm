@@ -2,7 +2,7 @@
 
 ;;; File: "gambit#.scm"
 
-;;; Copyright (c) 2005-2022 by Marc Feeley, All Rights Reserved.
+;;; Copyright (c) 2005-2023 by Marc Feeley, All Rights Reserved.
 
 ;;;============================================================================
 
@@ -55,6 +55,7 @@ all-bits-set?
 any
 any-bit-set?
 any-bits-set?
+append!
 append-reverse
 append-reverse!
 apropos
@@ -205,14 +206,14 @@ dead-end
 deadlock-exception?
 default-user-interrupt-handler
 defer-user-interrupts
+delete
+delete!
 delete-directory
 delete-file-or-directory
 directory-files
 display-continuation-backtrace
 display-continuation-dynamic-environment
 display-continuation-environment
-display-dynamic-environment?
-display-environment-set!
 display-exception
 display-exception-in-context
 display-procedure-environment
@@ -221,6 +222,8 @@ divide-by-zero-exception-procedure
 divide-by-zero-exception?
 dotted-list?
 drop
+drop-right
+drop-right!
 eighth
 end-of-char-set?
 eq?-hash
@@ -234,6 +237,7 @@ error-exception?
 euclidean-quotient
 euclidean-remainder
 euclidean/
+every
 every-bit-set?
 executable-path
 expression-parsing-exception-kind
@@ -253,6 +257,7 @@ f32vector-ref
 f32vector-set
 f32vector-set!
 f32vector-shrink!
+f32vector-swap!
 f32vector?
 f64vector
 f64vector->list
@@ -266,6 +271,7 @@ f64vector-ref
 f64vector-set
 f64vector-set!
 f64vector-shrink!
+f64vector-swap!
 f64vector?
 fifth
 file-attributes
@@ -301,6 +307,7 @@ file-owner
 file-size
 file-type
 filter
+filter!
 first
 first-set-bit
 fixnum->flonum
@@ -604,6 +611,7 @@ output-port-readtable-set!
 output-port-timeout-set!
 output-port-width
 partition
+partition!
 path-directory
 path-expand
 path-extension
@@ -687,9 +695,11 @@ readtable-write-extended-read-macros?-set
 readtable?
 real-time
 remove
+remove!
 remq
 rename-file
-repl-display-environment?
+repl-backtrace-detail-level
+repl-highlight-source-level
 repl-error-port
 repl-input-port
 repl-output-port
@@ -716,6 +726,7 @@ s16vector-ref
 s16vector-set
 s16vector-set!
 s16vector-shrink!
+s16vector-swap!
 s16vector?
 s32vector
 s32vector->list
@@ -729,6 +740,7 @@ s32vector-ref
 s32vector-set
 s32vector-set!
 s32vector-shrink!
+s32vector-swap!
 s32vector?
 s64vector
 s64vector->list
@@ -742,6 +754,7 @@ s64vector-ref
 s64vector-set
 s64vector-set!
 s64vector-shrink!
+s64vector-swap!
 s64vector?
 s8vector
 s8vector->list
@@ -755,6 +768,7 @@ s8vector-ref
 s8vector-set
 s8vector-set!
 s8vector-shrink!
+s8vector-swap!
 s8vector?
 scheduler-exception-reason
 scheduler-exception?
@@ -883,6 +897,7 @@ socket-info-family
 socket-info-port-number
 socket-info?
 split-at
+split-at!
 stack-overflow-exception?
 started-thread-exception-arguments
 started-thread-exception-procedure
@@ -908,6 +923,7 @@ string-suffix-ci?
 string-suffix-length
 string-suffix-length-ci
 string-suffix?
+string-swap!
 string=?-hash
 subf32vector
 subf32vector-fill!
@@ -964,6 +980,8 @@ table-search
 table-set!
 table?
 take
+take!
+take-right
 tanh
 tcp-client-local-socket-info
 tcp-client-peer-socket-info
@@ -1058,6 +1076,7 @@ u16vector-ref
 u16vector-set
 u16vector-set!
 u16vector-shrink!
+u16vector-swap!
 u16vector?
 u32vector
 u32vector->list
@@ -1071,6 +1090,7 @@ u32vector-ref
 u32vector-set
 u32vector-set!
 u32vector-shrink!
+u32vector-swap!
 u32vector?
 u64vector
 u64vector->list
@@ -1084,6 +1104,7 @@ u64vector-ref
 u64vector-set
 u64vector-set!
 u64vector-shrink!
+u64vector-swap!
 u64vector?
 u8vector
 u8vector->list
@@ -1098,6 +1119,7 @@ u8vector-ref
 u8vector-set
 u8vector-set!
 u8vector-shrink!
+u8vector-swap!
 u8vector?
 ucs-range->char-set
 ucs-range->char-set!
@@ -1148,11 +1170,19 @@ user-info-uid
 user-info?
 user-name
 vector->bits
+vector-any
 vector-cas!
 vector-concatenate
+vector-cumulate
+vector-every
+vector-fold
+vector-fold-right
 vector-inc!
 vector-set
 vector-shrink!
+vector-swap!
+vector-unfold
+vector-unfold-right
 void
 will-execute!
 will-testator

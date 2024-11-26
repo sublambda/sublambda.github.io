@@ -5,7 +5,7 @@ _cst10__srfi_2f_124 = _i("##type-2-E3B20910-F869-4C15-B427-454DC8334518");
 
 _cst11__srfi_2f_124 = _i("ephemeron");
 
-_cst0__srfi_2f_124 = new _Structure([new _Structure([null,_i("##type-5"),_i("type"),8,!1,[_i("id"),1,!1,_i("name"),5,!1,_i("flags"),5,!1,_i("super"),5,!1,_i("fields"),5,!1]]),_cst10__srfi_2f_124,_cst11__srfi_2f_124,29,!1,[_i("will"),1,!1,_i("datum"),1,!1]]);
+_cst0__srfi_2f_124 = new _Structure([new _Structure([null,_i("##type-5"),_i("type"),26,!1,[_i("id"),1,!1,_i("name"),5,!1,_i("flags"),5,!1,_i("super"),5,!1,_i("fields"),5,!1]]),_cst10__srfi_2f_124,_cst11__srfi_2f_124,29,!1,[_i("will"),1,!1,_i("datum"),1,!1]]);
 
 _cst15__srfi_2f_124 = _i("##raise-type-exception");
 

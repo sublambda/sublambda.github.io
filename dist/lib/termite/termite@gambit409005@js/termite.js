@@ -67,7 +67,7 @@ _cst31__termite = _i("termite#*server-timeout*");
 
 _cst32__termite = _i("termite#*event-manager-timeout*");
 
-_cst34__termite = new _Structure([null,_i("##type-5"),_i("type"),8,!1,[_i("id"),1,!1,_i("name"),5,!1,_i("flags"),5,!1,_i("super"),5,!1,_i("fields"),5,!1]]);
+_cst34__termite = new _Structure([null,_i("##type-5"),_i("type"),26,!1,[_i("id"),1,!1,_i("name"),5,!1,_i("flags"),5,!1,_i("super"),5,!1,_i("fields"),5,!1]]);
 
 _cst43__termite = _i("##type-4-1d3007b8-c5aa-4090-ab55-e352040a4498");
 
@@ -62668,7 +62668,7 @@ return _s[_t+1]();
 _j(_bb5_termite_23_report_2d_event = () => {
 _s[_t+1] = _r;
 _s[_t+2] = _b;
-var closure0 = _closure_alloc([_bb10_termite_23_report_2d_event,_c,_d,_s[_t]]);
+var closure0 = _closure_alloc([_bb10_termite_23_report_2d_event,_s[_t],_c,_d]);
 _s[_t+3] = closure0;
 _b = _s[_t+3];
 _a = _s[_t+2];
@@ -62720,7 +62720,7 @@ return _bb9_termite_23_report_2d_event();
 },3,2);
 
 _k(_bb12_termite_23_report_2d_event = () => {
-_a = _s[_t](!0)[1];
+_a = _s[_t](!0)[2];
 _r = _bb13_termite_23_report_2d_event;
 _n = 1;
 return _e["##display"]();
@@ -62756,7 +62756,7 @@ return _e["##newline0"]();
 },2,1);
 
 _k(_bb18_termite_23_report_2d_event = () => {
-_a = _s[_t](!0)[2];
+_a = _s[_t](!0)[3];
 _r = _bb19_termite_23_report_2d_event;
 _n = 1;
 return _e["##display"]();
@@ -62769,7 +62769,7 @@ return _e["##newline0"]();
 },2,1);
 
 _k(_bb20_termite_23_report_2d_event = () => {
-_a = _s[_t](!0)[3];
+_a = _s[_t](!0)[1];
 _r = _bb31_termite_23_report_2d_event;
 --_t;
 return _bb21_termite_23_report_2d_event();
@@ -63140,15 +63140,11 @@ _m(_bb1_termite_23_current_2d_node = () => {
 if (_n !== 0) {
 return _w(_bb1_termite_23_current_2d_node);
 }
-return _bb2_termite_23_current_2d_node();
+_a = _cst287__termite;
+return _p(_bb2_termite_23_current_2d_node);
 },-1,_cst0__termite,!1,!1);
 
 _j(_bb2_termite_23_current_2d_node = () => {
-_a = _cst287__termite;
-return _p(_bb3_termite_23_current_2d_node);
-});
-
-_j(_bb3_termite_23_current_2d_node = () => {
 _n = 1;
 return _g["##error"]();
 });

@@ -5,7 +5,7 @@ _cst0__srfi_2f_41 = _i("lazy");
 
 _cst7__srfi_2f_41 = _i("name");
 
-_cst2__srfi_2f_41 = new _Structure([null,_i("##type-5"),_i("type"),8,!1,[_i("id"),1,!1,_cst7__srfi_2f_41,5,!1,_i("flags"),5,!1,_i("super"),5,!1,_i("fields"),5,!1]]);
+_cst2__srfi_2f_41 = new _Structure([null,_i("##type-5"),_i("type"),26,!1,[_i("id"),1,!1,_cst7__srfi_2f_41,5,!1,_i("flags"),5,!1,_i("super"),5,!1,_i("fields"),5,!1]]);
 
 _cst11__srfi_2f_41 = _i("##type-1-F9EEE924-9507-4554-8c09-d9bb9411479B");
 

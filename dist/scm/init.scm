@@ -45,3 +45,7 @@
 (define (include-imports)
   (eval '(include "~~/scm/imports.scm")))
 
+(define (initmsg msg)
+  \console.log(`msg))
+
+(initmsg "init revision: 16")

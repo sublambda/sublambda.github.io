@@ -49,16 +49,13 @@ OTHER DEALINGS IN THE SOFTWARE.
   (##namespace
    ("srfi/231#"
     ;; Internal SRFI 231 procedures that are either tested or called here.
-    %%test-moves           ;; TODO: Remove after testing
     %%compose-indexers
     make-%%array
-    %%every
     %%interval->basic-indexer
     %%interval-lower-bounds
     %%interval-upper-bounds
     %%move-array-elements
     %%permutation-invert
-    %%vector-every
     %%vector-permute
     %%vector-permute->list
     %%order-unknown
@@ -273,6 +270,9 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 (test (make-interval '#(-1))
       "make-interval: The argument is not a vector of nonnegative exact integers: ")
+
+(test (make-interval '#(1) '#(0))
+      "make-interval: Each lower-bound must be no greater than the associated upper-bound: ")
 
 
 (pp "interval result tests")
@@ -495,11 +495,6 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 (next-test-random-source-state!)
 
-
-(pp "interval-contains-multi-index? error tests")
-
-
-
 (pp "interval-volume error tests")
 
 (test (interval-volume #f)
@@ -566,8 +561,22 @@ OTHER DEALINGS IN THE SOFTWARE.
                                            (list->vector upper1))
                             (make-interval (list->vector lower2)
                                            (list->vector upper2)))
-          (and (%%every (lambda (x) (>= (car x) (cdr x))) (map cons lower1 lower2))
-               (%%every (lambda (x) (<= (car x) (cdr x))) (map cons upper1 upper2))))))
+          (and (every (lambda (x) (>= (car x) (cdr x))) (map cons lower1 lower2))
+               (every (lambda (x) (<= (car x) (cdr x))) (map cons upper1 upper2))))))
+
+(pp "interval-empty? tests")
+
+(test (interval-empty? 'a)
+      "interval-empty?: The argument is not an interval: ")
+
+(test (interval-empty? (make-interval '#(1) '#(1)))
+      #t)
+
+(test (interval-empty? (make-interval '#(1) '#(2)))
+      #f)
+
+(test (interval-empty? (make-interval '#()))
+      #f)
 
 (next-test-random-source-state!)
 
@@ -661,7 +670,13 @@ OTHER DEALINGS IN THE SOFTWARE.
 (test (interval-fold-right 1 values 3 (make-interval '#(2 2)))
       "interval-fold-right: The first argument is not a procedure: ")
 
-;;; We'll rely on tests for array-fold[lr] to test interval-fold[lr]
+;;; We'll mainly rely on tests for array-fold[lr] to test interval-fold[lr]
+
+(test (interval-fold-left identity + 0 (make-interval '#(5)))
+      10)
+
+(test (interval-fold-right identity + 0 (make-interval '#(5)))
+      10)
 
 (pp "interval-dilate error tests")
 
@@ -826,10 +841,7 @@ OTHER DEALINGS IN THE SOFTWARE.
                                    (symbol->string name)
                                    "): ")))
               (test ((storage-class-data->body class) 'a)
-                    message)
-              #;(test ((storage-class-data->body class) (maker 0))
-                    message)
-              ))
+                    message)))
           storage-class-names)
 
 (pp "array error tests")
@@ -1039,12 +1051,11 @@ OTHER DEALINGS IN THE SOFTWARE.
 (test (make-specialized-array  'a)
       "make-specialized-array: The first argument is not an interval: ")
 
-(test (make-specialized-array (make-interval '#(0) '#(10)) 'a 1)
+(test (make-specialized-array (make-interval '#(0) '#(10)) 'a)
       "make-specialized-array: The second argument is not a storage-class: ")
 
 (test (make-specialized-array (make-interval '#(0) '#(10)) u16-storage-class 'a)
       "make-specialized-array: The third argument cannot be manipulated by the second (a storage class): ")
-
 
 (test (make-specialized-array (make-interval '#(0) '#(10)) generic-storage-class 'a 'a)
       "make-specialized-array: The fourth argument is not a boolean: ")
@@ -1101,10 +1112,20 @@ OTHER DEALINGS IN THE SOFTWARE.
 (test (make-specialized-array-from-data 'a)
       "make-specialized-array-from-data: The first argument is not compatible with the storage class: ")
 
+;;; The string is mutable in the interpreter, and immutable in the compiler, and this passes both ways.
+;;; Passing immutable data to make-specialized-array-from-data with the mutable? argument #t
+;;; is an error situation, but this is how the sample implementation currently deals with it.
+
+(let* ((string "123")
+       (array (make-specialized-array-from-data string char-storage-class #t)))
+  (test (array? array) #t)
+  (test (mutable-array? array)
+        (##mutable? string)))
+
 (let ((test-values
        (list ;;       storae-class   default other data
         (list generic-storage-class  #f 'a 1 #\c)
-        (list    char-storage-class  '#\0 '#\a '#\b)
+        (list    char-storage-class  '#\null '#\a '#\b)
         (list      u1-storage-class  0 1)
         (list      u8-storage-class  0 23)
         (list     u16-storage-class  0 500)
@@ -1510,6 +1531,21 @@ OTHER DEALINGS IN THE SOFTWARE.
     (lambda ()
       (vector-ref storage-classes (random n)))))
 
+(pp "array-empty? tests")
+
+(test (array-empty? 'a)
+      "array-empty?: The argument is not an array: ")
+
+(test (array-empty? (make-array (make-interval '#(1) '#(1)) list))
+      #t)
+
+(test (array-empty? (make-array (make-interval '#(1) '#(2)) list))
+      #f)
+
+(test (array-empty? (make-array (make-interval '#()) list))
+      #f)
+
+
 (pp "array-packed? tests")
 
 ;; We'll use specialized arrays with u1-storage-class---we never
@@ -1608,7 +1644,7 @@ OTHER DEALINGS IN THE SOFTWARE.
           (array-reverse base reversed-dimensions)))
     (test (array-packed? reversed)
           (or (array-empty? reversed)
-              (%%vector-every
+              (vector-every
                (lambda (lower upper reversed)
                  (or (= (+ 1 lower) upper)  ;; side-length 1
                      (not reversed)))       ;; dimension not reversed
@@ -1801,7 +1837,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 
 
-(do ((d 1 (fx+ d 1)))
+(do ((d 0 (fx+ d 1)))
     ((= d 6))
   (let* ((uppers-list
           (iota d 2))
@@ -1836,10 +1872,12 @@ OTHER DEALINGS IN THE SOFTWARE.
                   "Block copy"))
         (test (myarray= specialized-source specialized-destination)
               #t)
-        ;; copy to non-adjacent elements of destination, no checking needed
+        ;; copy to (perhaps) non-adjacent elements of destination, no checking needed
         (test (%%move-array-elements (array-reverse specialized-destination) specialized-source "test: ")
               (if (array-packed? (array-reverse specialized-destination))
-                  "No checks needed"
+                  (if (storage-class-copier storage-class)
+                      "Block copy"
+                      "In order, no checks needed")
                   "No checks needed"))
         (test (myarray= specialized-source (array-reverse specialized-destination))
               #t)
@@ -1866,7 +1904,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 (next-test-random-source-state!)
 
-(do ((d 1 (fx+ d 1)))
+(do ((d 0 (fx+ d 1)))
     ((= d 6))
   (let* ((uppers-list
           (iota d 2))
@@ -1922,11 +1960,11 @@ OTHER DEALINGS IN THE SOFTWARE.
                                               "Block copy")
                                              ((eq? destination-storage-class generic-storage-class)
                                               "In order, no checks needed, generic-storage-class")
-                                             ((%%every destination-checker (cdr (assq source-storage-class extreme-values-alist)))
+                                             ((every destination-checker (cdr (assq source-storage-class extreme-values-alist)))
                                               "In order, no checks needed")
                                              (else
                                               "In order, checks needed"))
-                                       (cond ((%%every destination-checker (cdr (assq source-storage-class extreme-values-alist)))
+                                       (cond ((every destination-checker (cdr (assq source-storage-class extreme-values-alist)))
                                               "No checks needed")
                                              (else
                                               "Checks needed")))
@@ -2183,6 +2221,10 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 
               ;; We gotta make sure than the error checks work in all dimensions ...
+
+              (test (array-copy (make-array (make-interval '#()) list)
+                                u16-storage-class)
+                    (wrap "Not all elements of the source can be stored in destination: "))
 
               (test (array-copy (make-array (make-interval '#(1) '#(2))
                                             list)
@@ -2478,7 +2520,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 
 
-(pp "array-fold[lr] error tests")
+(pp "array-fold-left, array-fold-right error tests")
 
 (test (array-fold-left 1 1 1)
       "array-fold-left: The first argument is not a procedure: ")
@@ -2753,7 +2795,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 (define matrix vector)
 
-(define (2x2-multiply A B)
+(define (two-x-two-multiply A B)
   (let ((a_11 (vector-ref A 0)) (a_12 (vector-ref A 1))
         (a_21 (vector-ref A 2)) (a_22 (vector-ref A 3))
         (b_11 (vector-ref B 0)) (b_12 (vector-ref B 1))
@@ -2769,12 +2811,6 @@ OTHER DEALINGS IN THE SOFTWARE.
                             (matrix 1 0
                                     i 1)))))
 
-(test (array-reduce 2x2-multiply A)
-      (array-fold-right 2x2-multiply (matrix 1 0 0 1) A))
-
-(test (array-reduce 2x2-multiply A)
-      (array-fold-left 2x2-multiply (matrix 1 0 0 1) A))
-
 
 (define A_2 (make-array (make-interval '#(1 1) '#(3 7))
                         (lambda (i j)
@@ -2784,16 +2820,6 @@ OTHER DEALINGS IN THE SOFTWARE.
                               (matrix 1 j
                                       i -1)))))
 
-(test (array-reduce 2x2-multiply A_2)
-      (array-fold-right 2x2-multiply (matrix 1 0 0 1) A_2))
-
-(test (array-reduce 2x2-multiply A_2)
-      (array-fold-left 2x2-multiply (matrix 1 0 0 1) A_2))
-
-(test (equal? (array-reduce 2x2-multiply A_2)
-              (array-reduce 2x2-multiply (array-permute A_2 (index-rotate (array-dimension A_2) 1))))
-      #f)
-
 (define A_3 (make-array (make-interval '#(1 1 1) '#(3 5 4))
                         (lambda (i j k)
                           (if (and (even? i) (even? j))
@@ -2802,15 +2828,6 @@ OTHER DEALINGS IN THE SOFTWARE.
                               (matrix k j
                                       i -1)))))
 
-(test (array-reduce 2x2-multiply A_3)
-      (array-fold-right 2x2-multiply (matrix 1 0 0 1) A_3))
-
-(test (array-reduce 2x2-multiply A_3)
-      (array-fold-left 2x2-multiply (matrix 1 0 0 1) A_3))
-
-(test (equal? (array-reduce 2x2-multiply A_3)
-              (array-reduce 2x2-multiply (array-permute A_3 (index-rotate (array-dimension A_3) 1))))
-      #f)
 
 (define A_4 (make-array (make-interval '#(1 1 1 1) '#(3 2 4 3))
                         (lambda (i j k l)
@@ -2820,16 +2837,6 @@ OTHER DEALINGS IN THE SOFTWARE.
                               (matrix l k
                                       i j)))))
 
-(test (array-reduce 2x2-multiply A_4)
-      (array-fold-right 2x2-multiply (matrix 1 0 0 1) A_4))
-
-(test (array-reduce 2x2-multiply A_4)
-      (array-fold-left 2x2-multiply (matrix 1 0 0 1) A_4))
-
-(test (equal? (array-reduce 2x2-multiply A_4)
-              (array-reduce 2x2-multiply (array-permute A_4 (index-rotate (array-dimension A_4) 1))))
-      #f)
-
 (define A_5 (make-array (make-interval '#(1 1 1 1 1) '#(3 2 4 3 3))
                         (lambda (i j k l m)
                           (if (even? m)
@@ -2838,13 +2845,18 @@ OTHER DEALINGS IN THE SOFTWARE.
                               (matrix (- l m) k
                                       i j)))))
 
-(test (array-reduce 2x2-multiply A_5)
-      (array-fold-right 2x2-multiply (matrix 1 0 0 1) A_5))
 
+(for-each (lambda (A)
+            (test (array-reduce two-x-two-multiply A)
+                  (array-fold-right two-x-two-multiply (matrix 1 0 0 1) A))
 
-(test (equal? (array-reduce 2x2-multiply A_5)
-              (array-reduce 2x2-multiply (array-permute A_5 (index-rotate (array-dimension A_5) 1))))
-      #f)
+            (test (array-reduce two-x-two-multiply A)
+                  (array-fold-left two-x-two-multiply (matrix 1 0 0 1) A))
+
+            (test (equal? (array-reduce two-x-two-multiply A)
+                          (array-reduce two-x-two-multiply (array-reverse A)))
+                  #f))
+          (list A A_2 A_3 A_4 A_5))
 
 (pp "Some array-curry tests.")
 
@@ -2860,6 +2872,11 @@ OTHER DEALINGS IN THE SOFTWARE.
 (test (array-curry (make-array (make-interval '#(0 0) '#(1 1)) list)  3)
       "array-curry: The second argument is not an exact integer between 0 and (interval-dimension (array-domain array)) (inclusive): ")
 
+;;; Used to fail.
+
+(test (array? (array-curry (array-permute (make-specialized-array (make-interval '#(4 4 0 4))) (index-last 4 1)) 1))
+      #t)
+
 (let* ((dim 6)
        (domain (make-interval (make-vector dim 3)))
        (immutable (make-array domain list))
@@ -2869,8 +2886,8 @@ OTHER DEALINGS IN THE SOFTWARE.
       ((> left-dim dim))
     (let* ((right-dim (- dim left-dim))
            (immutable-curry (array-curry immutable right-dim))
-           (mutable-curry(array-curry  mutable right-dim))
-           (special-curry (array-curry special right-dim)))
+           (mutable-curry   (array-curry  mutable right-dim))
+           (special-curry   (array-curry special right-dim)))
       (for-each (lambda (array)
                   (test (apply array-ref array (make-list left-dim 100))
                         "array-curry: domain does not contain multi-index: ")
@@ -3271,18 +3288,20 @@ OTHER DEALINGS IN THE SOFTWARE.
   (test (interval-translate int '#(1. 2.))
         "interval-translate: The second argument is not a vector of exact integers: ")
   (test (interval-translate int '#(1))
-        "interval-translate: The dimension of the first argument (an interval) does not equal the length of the second (a vector): ")
-  (do ((i 0 (+ i 1)))
-      ((= i random-tests))
-    (let* ((int (random-interval))
-           (lower-bounds (interval-lower-bounds->vector int))
-           (upper-bounds (interval-upper-bounds->vector int))
-           (translation (list->vector (map (lambda (x)
-                                             (random -10 10))
-                                           (local-iota 0 (vector-length lower-bounds))))))
-      (interval= (interval-translate int translation)
-                 (make-interval (vector-map + lower-bounds translation)
-                                (vector-map + upper-bounds translation))))))
+        "interval-translate: The dimension of the first argument (an interval) does not equal the length of the second (a vector): "))
+
+(do ((i 0 (+ i 1)))
+    ((= i random-tests))
+  (let* ((int (random-interval))
+         (lower-bounds (interval-lower-bounds->vector int))
+         (upper-bounds (interval-upper-bounds->vector int))
+         (translation (list->vector (map (lambda (x)
+                                           (random -10 10))
+                                         (local-iota 0 (vector-length lower-bounds))))))
+    (test (interval= (interval-translate int translation)
+                     (make-interval (vector-map + lower-bounds translation)
+                                    (vector-map + upper-bounds translation)))
+          #t)))
 
 (next-test-random-source-state!)
 
@@ -3376,8 +3395,6 @@ OTHER DEALINGS IN THE SOFTWARE.
 
   (test ((array-setter A) 'a 0 0)
         "The number of indices does not equal the array dimension: "))
-
-(next-test-random-source-state!)
 
 
 (pp "interval and array permutation tests")
@@ -3535,9 +3552,10 @@ OTHER DEALINGS IN THE SOFTWARE.
            (lower-bounds (interval-lower-bounds->vector int))
            (upper-bounds (interval-upper-bounds->vector int))
            (permutation (random-permutation (vector-length lower-bounds))))
-      (interval= (interval-permute int permutation)
-                 (make-interval (vector-permute lower-bounds permutation)
-                                (vector-permute upper-bounds permutation))))))
+      (test (interval= (interval-permute int permutation)
+                       (make-interval (vector-permute lower-bounds permutation)
+                                      (vector-permute upper-bounds permutation)))
+            #t))))
 
 (next-test-random-source-state!)
 
@@ -3733,7 +3751,7 @@ OTHER DEALINGS IN THE SOFTWARE.
                                  (car lowers)
                                  lowers))))
     ;; (pp (list args new-lowers new-uppers (vector-every < new-lowers new-uppers)))
-    (and (%%vector-every <= new-lowers new-uppers)
+    (and (vector-every <= new-lowers new-uppers)
          (make-interval new-lowers new-uppers))))
 
 
@@ -3891,6 +3909,14 @@ OTHER DEALINGS IN THE SOFTWARE.
   (test (mutable-array? B)
         #f))
 
+(let* ((A (make-specialized-array (make-interval '#(4 4))
+                                  generic-storage-class
+                                  #t     ;; mutable?
+                                  #t))   ;; safe?
+       (B (array-extract A (make-interval '#(2 2)))))
+  (test (array-ref B 2 2)
+        "array-getter: domain does not contain multi-index: "))
+
 (do ((i 0 (fx+ i 1)))
     ((fx= i random-tests))
   (let* ((domain (random-interval))
@@ -3969,18 +3995,17 @@ OTHER DEALINGS IN THE SOFTWARE.
 (test (array-tile (make-array (make-interval '#(0 0) '#(10 10)) list) 'a)
       "array-tile: The second argument is not a vector of the same length as the dimension of the array first argument: ")
 (test (array-tile (make-array (make-interval '#(0 0) '#(10 10)) list) '#(a a))
-      "array-tile: Axis 0 of the domain of the first argument has nonzero width, but element 0 of the second argument is neither an exact positive integer nor a vector of nonnegative exact integers summing to that width: ")
+      "array-tile: Element 0 of the second argument is neither a positive exact integer (allowed if the width of the first argument's corresponding axis is positive) nor a nonempty vector of nonnegative exact integers summing to the width of axis 0 of the first argument: ")
 (test (array-tile (make-array (make-interval '#(0 0) '#(10 10)) list) '#(-1 1))
-      "array-tile: Axis 0 of the domain of the first argument has nonzero width, but element 0 of the second argument is neither an exact positive integer nor a vector of nonnegative exact integers summing to that width: ")
+      "array-tile: Element 0 of the second argument is neither a positive exact integer (allowed if the width of the first argument's corresponding axis is positive) nor a nonempty vector of nonnegative exact integers summing to the width of axis 0 of the first argument: ")
 (test (array-tile (make-array (make-interval '#(0 0) '#(10 10)) list) '#(10))
       "array-tile: The second argument is not a vector of the same length as the dimension of the array first argument: ")
 (test (array-tile (make-array (make-interval '#(4)) list) '#(#(0 3 0 -1 2)))
-      "array-tile: Axis 0 of the domain of the first argument has nonzero width, but element 0 of the second argument is neither an exact positive integer nor a vector of nonnegative exact integers summing to that width: ")
+      "array-tile: Element 0 of the second argument is neither a positive exact integer (allowed if the width of the first argument's corresponding axis is positive) nor a nonempty vector of nonnegative exact integers summing to the width of axis 0 of the first argument: ")
 (test (array-tile (make-array (make-interval '#(4)) list) '#(#(0 3 0 0 2)))
-      "array-tile: Axis 0 of the domain of the first argument has nonzero width, but element 0 of the second argument is neither an exact positive integer nor a vector of nonnegative exact integers summing to that width: ")
-
+      "array-tile: Element 0 of the second argument is neither a positive exact integer (allowed if the width of the first argument's corresponding axis is positive) nor a nonempty vector of nonnegative exact integers summing to the width of axis 0 of the first argument: ")
 (test (array-tile (make-array (make-interval '#(0)) list) '#(2))
-      "array-tile: Axis 0 of the domain of the first argument has width 0, but element 0 of the second argument is not a nonempty vector of exact zeros: ")
+      "array-tile: Element 0 of the second argument is neither a positive exact integer (allowed if the width of the first argument's corresponding axis is positive) nor a nonempty vector of nonnegative exact integers summing to the width of axis 0 of the first argument: ")
 
 (do ((d 1 (fx+ d 1)))
      ((fx= d 6))
@@ -4535,7 +4560,7 @@ OTHER DEALINGS IN THE SOFTWARE.
     ((= i random-tests))
   (let* ((arrays
           (map (lambda (ignore)
-                 (make-array (random-interval 0 5) list))
+                 (make-array (random-interval 0 6) list))
                (make-list 2))))
     (myarray= (apply array-outer-product append arrays)
                     (make-array (apply my-interval-cartesian-product (map array-domain arrays))
@@ -4573,6 +4598,29 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 (test (array-ref A-ref 4 5)
       0)
+
+(let ((A (array-copy (make-array (make-interval '#(1 1 1 1 1 1)) list)))
+      (B (array-copy (make-array (make-interval '#(-1 -1 -1 -1 -1 -1)
+                                                '#( 1  1  1  1  1  1))
+                                 list))))
+  ;; We copied A and B so they would have the default error checking.
+  (test (array-ref A 0)
+        "array-getter: multi-index is not the correct dimension: ")
+  (test (array-ref B 0)
+        "array-getter: multi-index is not the correct dimension: ")
+  (test (array-ref A 0 0 0 0 0 0 0)
+        "array-getter: multi-index is not the correct dimension: ")
+  (test (array-ref B 0 0 0 0 0 0 0)
+        "array-getter: multi-index is not the correct dimension: " )
+  (test (array-set! A 0 0)
+        "array-setter: multi-index is not the correct dimension: ")
+  (test (array-set! B 0 0)
+        "array-setter: multi-index is not the correct dimension: ")
+  (test (array-set! A 0 0 0 0 0 0 0 0)
+        "array-setter: multi-index is not the correct dimension: ")
+  (test (array-set! B 0 0 0 0 0 0 0 0)
+        "array-setter: multi-index is not the correct dimension: " ))
+
 
 (do ((d 0 (+ d 1)))
     ((= d 6))
@@ -5649,7 +5697,7 @@ that computes the componentwise products when we need them, the times are
 
 (test (array-inner-product (make-array (make-interval '#(1 10)) list)
                            list list
-                           (make-array (make-interval '#(0 10)) list))
+                           (make-array (make-interval '#(2 10)) list))
       "array-inner-product: The bounds of the last dimension of the first argument are not the same as the bounds of the first dimension of the fourth argument: ")
 
 
@@ -5671,10 +5719,9 @@ that computes the componentwise products when we need them, the times are
 
 
 (let* ((A (make-array (make-interval '#(4 0)) list))
-       (B (make-array (make-interval '#(0 4)) list))
-       (C (array-inner-product A list list B))) ;; should be no error
-  (test (array-ref C 0 0)
-        "array-inner-product: Attempting to reduce over an empty array: "))
+       (B (make-array (make-interval '#(0 4)) list)))
+  (test (array-inner-product A list list B)
+        "array-inner-product: The width of the first axis of the fourth argument is zero: "))
 
 
 (pp "array-append and array-append! tests")
@@ -6555,11 +6602,10 @@ that computes the componentwise products when we need them, the times are
 
 (generations glider 5)
 
-#;(pp (reverse %%test-moves))
 
 ;;; Unit tests
 
-(pp 'unit-tests)
+(pp "unit-tests")
 
 (let ((A (make-specialized-array (make-interval '#(5 5 5 5 5) '#(8 8 8 8 8))))
       (B (make-specialized-array (make-interval '#(5 5 5 5 5)))))
@@ -6836,7 +6882,5 @@ that computes the componentwise products when we need them, the times are
       (begin
         (set! call-cont #f)
         (cont 4))))
-
-
 
 (for-each display (list "Failed " failed-tests " out of " total-tests " total tests.\n"))

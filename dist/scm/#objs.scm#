@@ -1,17 +1,22 @@
-(declare
+`(declare
  (extended-bindings)
  (standard-bindings)
  (block)
  )
-
-(##include "~~lib/_gambit#.scm")  
 
 (import (_six js))
 (import (srfi 28))                      ;format
 (import (srfi 69))                      ;hashtable
 ;(import _match)
 
+(##include "~~lib/_gambit#.scm")  
 (include "macros.scm")
+
+(define is-safari \is_safari)
+(define is-webkit \is_webkit)
+(define is-ioswebkit \is_ioswebkit)
+(define is-chrome \is_chrome)
+(define is-firefox \is_firefox)
 
 (define (extern name obj)
   \ (window[`name] = `obj))
@@ -39,12 +44,11 @@
     (slot! tx outlineOpacity: .7)
     (slot! tx outlineWidth: 0.006)
 
-    (slot! tx fillOpacity: 1)
+    (slot! tx fillOpacity: .5)
 
     (slot! tx strokeColor: #xffffff)
-    ;;(slot! tx strokeColor: #x0)
     (slot! tx strokeWidth: .01)
-    (slot! tx strokeOpacity: 0.8)
+    (slot! tx strokeOpacity: 0.5)
     (slot! tx fontSize .2)
 
     (send tx sync:)
@@ -70,9 +74,13 @@
 
     tx))
 (extern "ntext" ntext)
+(extern "sotext" ntext)
 
 (define (stringify string)
   \JSON.stringify(`string))
+
+(define (stringify-pretty string)
+  \JSON.stringify(`string, null, 2))
 
 (define *undefined* \undefined)
 (define *null* \null)
@@ -162,8 +170,6 @@
 (define (import-tone)
   (dynamic-import "https://unpkg.com/tone@14.7.77/build/Tone.js"))
 
-;;(import-tone)
-
 (define (tone n)
   (let ((synth (%new Tone.Synth)))
     (set! synth (send synth toDestination:))
@@ -171,10 +177,6 @@
 
 (define (trigger-attack-release p #!optional (q .1))
   (send (synth) triggerAttackRelease: p q))
-
-(define tar trigger-attack-release)
-
-(extern "tar" tar)
 
 (define (synth)
   (send (%new Tone.Synth) toDestination:))
@@ -287,10 +289,10 @@
 (define console-log \console.log)
 
 (define (avatar-hands #!optional model)
-  (let* ((b (box .04 1 .04))
+  (let* ((b (capsule .08 .7))
          (mat (slot b material:))
          (hands (sogltf "handsbw.glb")))
-    (send (slot hands position:) set: 0 0 10)
+    (send (slot hands position:) set: 0 0 2)
     (send (slot hands scale:) set: .05 .05 .05)
     (send b add: hands)
     (if (is-embedded?)
@@ -320,10 +322,14 @@
 (define vidbox \vidbox)
 
 (define (vbox #!optional model)
-  (let* ((vb (vidbox "https://meat.local/Hegre%20ariel%20hegre%20hegre%20art-3yqpc.mp4"))
+  (let* ((vb (vidbox "https://rx.0x.no/stuff/td.mp4"))
          (vid (slot vb vid:)))
     (slot! vb model: model)
-    (set-timeout (lambda () (slot! vid currentTime: 8)) 1000)
+    (set-timeout (lambda ()
+                   (send vid play:)
+                   (slot! vid currentTime: 8)
+                   (send vid pause:))
+                 1000)
     vb))
 (extern "vbox" vbox)
 
@@ -335,11 +341,6 @@
 
 (define-macro (-hexpr e)
   `(##inline-host-expression "@host2scm@(@1@)" e))
-
-(define (current-cell)
-  \currentcell)
-
-(define current-view \getview)
 
 
 ;; cellwork is a crucial workaround
@@ -402,6 +403,8 @@
 (define bash
   (lambda (#!optional model) (sogltf "lastofbash")))
 
+(
+
 (extern "lowalk" lowalk)
 (extern "bash" bash)
 
@@ -410,6 +413,7 @@
   (let* ((geom (%new THREE.SphereGeometry 1 12 12))
          (mat (%new THREE.MeshStandardMaterial))
          (mesh (%new THREE.Mesh geom mat)))
+    ;;(send (slot lim csm:) setupMaterial: mat)
     (send (slot mat color:) setHex: #x555555)
     (slot! mesh receiveShadow: #t)
     (slot! mesh castShadow: #t)
@@ -419,14 +423,30 @@
     mesh))
 (extern "kball" kball)
 
+(define (ico #!optional model)
+  (let* ((geom (%new THREE.IcosahedronGeometry 1 10))
+         (mat (%new THREE.MeshStandardMaterial
+                    (alist->object '((color: #x778888)
+                                     (wireframe: #t)))))
+         (mesh (%new THREE.Mesh geom mat)))
+    (when (truthy? (slot lim csm:))
+      (send (slot lim csm:) setupMaterial: mat))
+    (slot! mesh receiveShadow: #t)
+    (slot! mesh castShadow: #t)
+    mesh))
+(extern "ico" ico)
+
+
 (define (pbox #!optional model)
-  (let* ((b (%new THREE.BoxGeometry 1 1 1))
-         (m (%new THREE.MeshStandardMaterial
-                  (alist->object '((color: #x997777)
-                                   ;;(side: \THREE.DoubleSide)
-                                   (transparent: #t)
-                                   (opacity: 0.9)))))
-         (mesh (%new THREE.Mesh b m)))
+  (let* ((box (%new THREE.BoxGeometry 1 1 1))
+         (mat (%new THREE.MeshStandardMaterial
+                    (alist->object '((color: #x778888)
+                                     ;;(side: \THREE.DoubleSide)
+                                     ;;(transparent: #t)
+                                     (opacity: 0.9)))))
+         (mesh (%new THREE.Mesh box mat)))
+    (when (truthy? (slot lim csm:))
+      (send (slot lim csm:) setupMaterial: mat))
     (slot! mesh receiveShadow: #t)
     (slot! mesh castShadow: #t)
     mesh))
@@ -448,11 +468,13 @@
 
 (extern "dipshit" dipshit)
 
+(dynamic-import "/rasterizeHTML.min.js")
+
 (define (draw-url url canvas)
   \rasterizeHTML.drawURL(`url,`canvas))
 
 (define (draw-html html canvas)
-  \rasterizeHTML.drawHTML(`html,`canvas).then(console.warn))
+  \rasterizeHTML.drawHTML(`html,`canvas))
 
 (define reparentobj \reparentobj)
 
@@ -473,14 +495,13 @@
          (box (%new THREE.BoxGeometry 1 1 .01))
          (mat (%new THREE.MeshStandardMaterial))
          (mesh (%new THREE.Mesh box mat))
-         (w 1024)
-         (h 1024)
+         (w 512)
+         (h 512)
          (update-texture (lambda ()
                            (slot! tex needsUpdate: #t)))
          (clearfn (lambda ()
                     (send ctx clearRect: 0 0 w h)))
          (drawfn (lambda (rendered)
-                   (hey "rendered" rendered)
                    (send ctx drawImage: (slot rendered image:) 0 0)
                    (update-texture))))
 
@@ -515,17 +536,38 @@
                            (draw-html html canvas)
                            (update-texture)))
 
-    (send mesh seturl: "https://sublambda.github.io")
+    ;;(send mesh seturl: "https://sublambda.github.io/")
 
     mesh))
-
-(define is-safari \is_safari)
-(define is-webkit \is_webkit)
-(define is-ioswebkit \is_ioswebkit)
-(define is-chrome \is_chrome)
-(define is-firefox \is_firefox)
-
 (extern "htmlbox" htmlbox)
+
+(define (statusbox #!optional model)
+  (let* ((hb (htmlbox))
+         (setstatus
+          (lambda ()
+            (let ((info (slot (slot lim renderer:) info:)))
+              (send hb sethtml:
+                    (string-append
+                     "<body style='margin:0px;background:transparent'>"
+                     "<pre style='margin:0px; padding:5px;"
+                     "font-size:28px;"
+                     "color:rgba(200,230,230,0.8);"
+                     "text-shadow: 1px 1px 4px black;"
+                     "background:rgba(0,0,0,0.5);"
+                     "height:512px;'>"
+                     (stringify-pretty
+                      (alist->object
+                       `(;;("ts" ,(now))
+                         ("render" ,(slot info render:))
+                         ("mem" ,(slot info memory:)))))))))))
+    (setstatus)
+    (thread (lambda ()
+              (let loop ()
+                (thread-sleep! .5)
+                (setstatus) 
+                (loop))))
+    hb))
+(extern "statusbox" statusbox)
 
 
 (define (points)
@@ -793,11 +835,11 @@
 (define (matcap0)
   (%new THREE.MeshMatcapMaterial
         (alist->object
-         `((matcap: ,(load-texture "1024/mc188.png"))
+         `((matcap: ,(load-texture "mc1.png"))
            (vertexColors: #t)
            (side: 2)
-           (transparent: #t)
-           ;;(opacity: .7)
+           (transparent: #f)
+           (opacity: .7)
            (vertexColors: #f)))))
 (extern "matcap0" matcap0)
 
@@ -966,9 +1008,10 @@
                pts)))
     ml))
 
+(extern "meshline" meshline)
 
-(define sculpty \sculpty)
-(define sball \sball)
+;;(define sculpty \sculpty)
+;;(define sball \sball)
 
 (define (sculptfuck #!optional model)
   (let ((sc (sculpty)))
@@ -991,7 +1034,7 @@
 (extern "sculptfuck" sculptfuck)
 
 
-(define cavegen \cavegen)
+;;(define cavegen \cavegen)
 
 (define (sxfuck #!optional model)
   (let* ((mat (%new THREE.MeshPhysicalMaterial
@@ -1035,8 +1078,12 @@
 
 (extern "sxfuck" sxfuck)
 
+;;(##inline-host-declaration "import * as XCSG from 'three-bvh-csg'")
+;;(##inline-host-statement "window.XCSG=XCSG")
+;;\ window.XCSG=XCSG
 
 (define CSG \CSG)
+
 
 (define (csg-operation geom csgop material)
   (let ((op (%new CSG.Operation geom)))
@@ -1047,7 +1094,8 @@
 
 (define (csg-operation-group ops)
   (let ((og (%new CSG.OperationGroup)))
-    (apply send og add: ops)))
+    (apply send og add: ops)
+    og))
 
 (define (csg-addop geom #!optional material)
   (csg-operation geom (slot CSG ADDITION:) material))
@@ -1056,7 +1104,7 @@
   (csg-operation geom (slot CSG SUBTRACTION:) material))
 
 (define (csg-diffop geom #!optional material)
-  (csg-diffop geom (slot CSG DIFFERENCE:) material))
+  (csg-operation geom (slot CSG DIFFERENCE:) material))
 
 (define (csg-intersectop geom #!optional material)
   (csg-operation geom (slot CSG INTERSECTION:) material))
@@ -1089,7 +1137,7 @@
 (define (csg-intersect brush1 brush2)
   (csg-evaluate brush1 brush2 (slot CSG INTERSECTION:)))
 
-;; ADDITION, SUBTRACTION, DIFFERENCE, INTERSECTION
+;;ADDITION, SUBTRACTION, DIFFERENCE, INTERSECTION
 
 (define (capsule-geom rad len)
   (%new THREE.CapsuleGeometry rad len 4 10))
@@ -1098,58 +1146,83 @@
   (%new THREE.BoxGeometry x y z))
 
 (define (sphere-geom #!optional r)
-  (%new THREE.SphereGeometry))
+  (%new THREE.SphereGeometry r))
 
 (define (tube-geom pts)
   (let ((tb (tube)))
     (send tb setpts: pts)
     (slot tb geometry:)))
 
-(define initbvh \initbvh)
-(initbvh)
-
-(define xxx 0)
+(\initbvh)
 
 (define (csg-position! op x y z)
   (send (slot op position:) set: x y z)
   op)
 
+(define (standard-material opts)
+  (%new THREE.MeshStandardMaterial
+        (alist->object (append opts '((transparent #t)
+                                      (opacity: .5)
+                                      (side: 2))))))
+(define (grid-material opts)
+  (%new CSG.GridMaterial
+        (alist->object (append opts '((transparent #f)
+                                      (opacity: .5)
+                                      (side: 2))))))
+
 (define *gridmaterial* (%new CSG.GridMaterial))
-;;(send (slot *gridmaterial* color:) set: #xbbcccc)
+(send (slot *gridmaterial* color:) set: #xbbcccc)
 
 (define (chunk #!optional model)
-  (let* ((bg (box-geom 4 4 4))
-         (cg (capsule-geom .8 .4))
-         (tg (tube-geom #(#(0 -3 0)
-                          #(0 3 0))))
-         (eg (extrusion-geom .4 '((0 -2.3 0) 
-                                  (0 -1 0)
-                                  (.5 0 0)
-                                  (0 1 0)
-                                  (0 2.3 0))))
-         (eg2 (extrusion-geom .3 '((-3 0 0)
-                                   (2 0 0))))
-         (mat (%new THREE.MeshStandardMaterial
-                    (alist->object '((color: #x997777)
-                                     (side: 2)
-                                     (transparent: #t)
-                                     (opacity: 0.6)))))
-         ;;(xg (csg-sub (csg-brush bg) (csg-brush eg)))
-         (xg (let ((root (csg-addop bg mat)))
-               (send root add:
-                     (csg-operation-group
-                      (list (csg-position! (csg-subop cg) 1 1.5 0)
-                            (csg-position! (csg-subop cg) 1 1 0)
-                            (csg-position! (csg-subop cg) -.3 0 0)
-                            (csg-subop eg)
-                            (csg-subop eg2))))
+  (let* ((bg (box-geom 2 2 2))
+         (bg2 (box-geom 2 2 2))
+         (mat (grid-material '((color: #xffffff))))
+         (mat2 (grid-material '((color: #xffbbbb))))
+         (xg (let ((root (csg-addop bg (matcap0))))
+               (send bg2 translate: 1 1 1)
+               (send root add: (csg-subop bg2 mat))
+               (send bg2 rotateX: .5)
                (csg-evaluate-hier root))))
-    ;;(slot! xg material: mat)
     (slot! xg castShadow: #t)
     (slot! xg receiveShadow: #t)
     xg))
 
-(define (chunk2 #!optional model)
+
+(define (chunk11 #!optional model)
+  (let* ((bg (box-geom 2 2 2))
+         (smat (grid-material '((color #xffcccc))))
+         (xg (let ((root (csg-addop bg (matcap0)))
+                   (r (lambda () (* (- (random-real) .5) 2))))
+               (let loop ((n 40))
+                 (let ((s (sphere-geom .3)))
+                   (send root add: (csg-subop s smat))
+                   (send s translate: (r) (r) (r)))
+                 (when (> n 0)
+                   (loop (- n 1))))
+               (csg-evaluate-hier root))))
+    (slot! xg castShadow: #t)
+    (slot! xg receiveShadow: #t)
+    xg))
+
+(define (chunk1 #!optional model)
+  (let* ((bg (box-geom 2 2 2))
+         (mat (grid-material '((color #xccffff))))
+         (smat (matcap0))
+         (xg (let ((root (csg-addop bg mat))
+                   (r (lambda () (* (- (random-real) .5) 2.2))))
+               (send root add:
+                     (csg-operation-group
+                      (map (lambda (i)
+                             (let ((s (sphere-geom .4)))
+                               (send s translate: (r) (r) (+ .1 (r)))
+                               (csg-subop s smat)))
+                           (iota 8))))
+               (csg-evaluate-hier root))))
+    (slot! xg castShadow: #t)
+    (slot! xg receiveShadow: #t)
+    xg))
+
+(define (chunk3 #!optional model)
   (let* ((bg (box-geom 8 3 3))
          (rr (lambda () (* 1 (- (random-real) .5))))
          (eg (extrusion-geom
@@ -1157,22 +1230,34 @@
                         (list (- i  4.5) (rr) (rr)))
                       (iota 10))))
          (eg2 (extrusion-geom
-               .55 (map (lambda (i)
+               .45 (map (lambda (i)
                           (list (- i  4.5) (rr) (rr)))
                       (iota 10))))
          (mat (%new THREE.MeshStandardMaterial
                     (alist->object '((color: #x997777)
                                      (side: 2)
                                      (transparent: #t)
+                                     (opacity: 0.4)))))
+         (mat2 (%new THREE.MeshStandardMaterial
+                    (alist->object '((color: #x333333)
+                                     (side: 2)
+                                     (transparent: #t)
                                      (opacity: 0.8)))))
          (xg (let ((root (csg-addop bg mat)))
                (send root add:
                      (csg-operation-group
-                      (list (csg-subop eg2) (csg-addop eg))))
+                      (list (csg-subop eg2 mat2) (csg-subop eg mat2))))
                (csg-evaluate-hier root))))
     (slot! xg castShadow: #t)
     (slot! xg receiveShadow: #t)
     xg))
 
 (extern "chunk" chunk)
+(extern "chunk1" chunk1)
 (extern "chunk2" chunk2)
+
+(define (setpoints val)
+  (send lim setpoints: val)) 
+(extern "setpoints" setpoints)
+
+;;(hi "objs revision: 245")

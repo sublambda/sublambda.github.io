@@ -17,7 +17,7 @@ _cst6____git = _i("##path-expand");
 
 _cst17____git = _i("##type-1-AF9B3B94-EE56-4D95-A323-AEE3C97E70FC");
 
-_cst7____git = new _Structure([new _Structure([null,_i("##type-5"),_i("type"),8,!1,[_i("id"),1,!1,_i("name"),5,!1,_i("flags"),5,!1,_i("super"),5,!1,_i("fields"),5,!1]]),_cst17____git,_i("git-repository"),29,!1,[_i("path"),18,!1]]);
+_cst7____git = new _Structure([new _Structure([null,_i("##type-5"),_i("type"),26,!1,[_i("id"),1,!1,_i("name"),5,!1,_i("flags"),5,!1,_i("super"),5,!1,_i("fields"),5,!1]]),_cst17____git,_i("git-repository"),29,!1,[_i("path"),18,!1]]);
 
 _cst21____git = _i("##tty-mode-reset");
 

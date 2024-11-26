@@ -294,11 +294,17 @@
 (define (scene-add obj)
   (send (scene) add: obj))
 
+;;(define composer0 \composer0)
+;;(define sobel \sobel)
 (define (composer val)
-  (slot! lim composer: (if val (send lim composer0:) 0)))
+  \ldpp()
+  (let* ((sobel \sobel)
+         (c0 (sobel lim)))
+    (slot! lim composer: (if val c0 #f))))
 
 (define (obj-name obj)
   (slot obj name:))
+
 
 
 ;;; ui junk
@@ -458,7 +464,7 @@
                  ;;(tar f1: .01)
                  (send lim toggleimage:)))
 
-(define sball \sball)
+;;(define sball \sball)
 
 (addbutton "5" (lambda (e)
                  (hey 5)
@@ -493,3 +499,29 @@
 
 (define (restoremap id)
   \lim.restoremap(`id))
+
+
+
+
+(define (addeffect effect)
+  (let ((comp (slot lim composer:))
+        (cam (slot lim camera:)))
+    (send comp addPass: (%new pp.EffectPass cam effect))))
+
+(define (sepia)
+  (addeffect (%new pp.SepiaEffect)))
+
+(define (vignette)
+  (addeffect (%new pp.VignetteEffect)))
+
+(define (dotscreen)
+  (addeffect (%new pp.DotScreenEffect)))
+
+
+                             
+(define (hi msg)
+  \console.log("hi", `msg)
+  (display (string-append ";;; " msg))
+  (newline))
+;;(hi "util revision: 38")
+

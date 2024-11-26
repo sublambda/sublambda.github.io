@@ -2812,16 +2812,12 @@ _m(_bb1___test_23_call_2d_thunk = () => {
 if (_n !== 1) {
 return _w(_bb1___test_23_call_2d_thunk);
 }
-return _bb2___test_23_call_2d_thunk();
+_s[_t+1] = _r;
+++_t;
+return _p(_bb2___test_23_call_2d_thunk);
 },-1,_cst10____test,!1,!1);
 
 _j(_bb2___test_23_call_2d_thunk = () => {
-_s[_t+1] = _r;
-++_t;
-return _p(_bb4___test_23_call_2d_thunk);
-});
-
-_j(_bb4___test_23_call_2d_thunk = () => {
 _r = _bb3___test_23_call_2d_thunk;
 _n = 0;
 return _a;

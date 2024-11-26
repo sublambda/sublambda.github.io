@@ -157,39 +157,13 @@ OTHER DEALINGS IN THE SOFTWARE.
 ;; Inlining the following routines causes too much code bloat
 ;; after compilation.
 
-;;; We do not need a multi-argument every.
-
-(define (%%every pred list)
-  (let loop ((list list))
-    (or (null? list)
-        (and (pred (car list))
-             (loop (cdr list))))))
-
-;;; the following is used in error checks.
-
-(define %%vector-every
-  (case-lambda
-   ((pred vec)
-    (let loop ((i (fx- (vector-length vec) 1)))
-      (or (fx< i 0)
-          (and (pred (vector-ref vec i))
-               (loop (fx- i 1))))))
-   ((pred vec vec2)
-    (let loop ((i (fx- (vector-length vec) 1)))
-      (or (fx< i 0)
-          (and (pred (vector-ref vec i)
-                     (vector-ref vec2 i))
-               (loop (fx- i 1))))))
-   ((pred vec vec2 . rest)
-    (let ((vecs (cons vec (cons vec2 rest))))
-      (let loop ((i (fx- (vector-length vec) 1)))
-        (or (fx< i 0)
-            (and (apply pred (map (lambda (vec) (vector-ref vec i)) vecs))
-                 (loop (fx- i 1)))))))))
+;;; Requires every
 
 ;;; requires vector-map, vector-copy function
 
 ;;; requires vector-concatenate function
+
+;;; requires vector-every
 
 ;;; requires exact-integer? function
 
@@ -221,8 +195,8 @@ OTHER DEALINGS IN THE SOFTWARE.
   (case-lambda
    ((upper-bounds)
     (cond ((not (and (vector? upper-bounds)
-                     (%%vector-every (lambda (x) (exact-integer? x)) upper-bounds)
-                     (%%vector-every (lambda (x) (not (negative? x))) upper-bounds)))
+                     (vector-every (lambda (x) (exact-integer? x)) upper-bounds)
+                     (vector-every (lambda (x) (not (negative? x))) upper-bounds)))
            (error "make-interval: The argument is not a vector of nonnegative exact integers: " upper-bounds))
           (else
            (let ((dimension (vector-length upper-bounds)))
@@ -232,15 +206,15 @@ OTHER DEALINGS IN THE SOFTWARE.
                                 (vector-copy upper-bounds))))))
    ((lower-bounds upper-bounds)
     (cond ((not (and (vector? lower-bounds)
-                     (%%vector-every (lambda (x) (exact-integer? x)) lower-bounds)))
+                     (vector-every (lambda (x) (exact-integer? x)) lower-bounds)))
            (error "make-interval: The first argument is not a vector of exact integers: " lower-bounds upper-bounds))
           ((not (and (vector? upper-bounds)
-                     (%%vector-every (lambda (x) (exact-integer? x)) upper-bounds)))
+                     (vector-every (lambda (x) (exact-integer? x)) upper-bounds)))
            (error "make-interval: The second argument is not a vector of exact integers: " lower-bounds upper-bounds))
           ((not (fx= (vector-length lower-bounds)
                      (vector-length upper-bounds)))
            (error "make-interval: The first and second arguments are not the same length: " lower-bounds upper-bounds))
-          ((not (%%vector-every (lambda (x y) (<= x y)) lower-bounds upper-bounds))
+          ((not (vector-every (lambda (x y) (<= x y)) lower-bounds upper-bounds))
            (error "make-interval: Each lower-bound must be no greater than the associated upper-bound: " lower-bounds upper-bounds))
           (else
            (%%finish-interval (vector-copy lower-bounds)
@@ -313,7 +287,7 @@ OTHER DEALINGS IN THE SOFTWARE.
                        (iota n))))
                (iota 5))))
      (define %%index-swaps
-       `,(list->vector
+       ',(list->vector
           (map (lambda (n)
                  (list->vector
                   (map (lambda (i)
@@ -575,7 +549,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 (define (translation? translation)
   (and (vector? translation)
-       (%%vector-every (lambda (x) (exact-integer? x)) translation)))
+       (vector-every (lambda (x) (exact-integer? x)) translation)))
 
 (define (interval-translate interval translation)
   (cond ((not (interval? interval))
@@ -604,11 +578,11 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 (define (interval-scale interval scales)
   (cond ((not (and (interval? interval)
-                   (%%vector-every (lambda (x) (eqv? 0 x)) (%%interval-lower-bounds interval))))
+                   (vector-every (lambda (x) (eqv? 0 x)) (%%interval-lower-bounds interval))))
          (error "interval-scale: The first argument is not an interval with all lower bounds zero: " interval scales))
         ((not (and (vector? scales)
-                   (%%vector-every (lambda (x) (exact-integer? x)) scales)
-                   (%%vector-every (lambda (x) (positive? x)) scales)))
+                   (vector-every (lambda (x) (exact-integer? x)) scales)
+                   (vector-every (lambda (x) (positive? x)) scales)))
          (error "interval-scale: The second argument is not a vector of positive, exact, integers: " interval scales))
         ((not (fx= (vector-length scales) (%%interval-dimension interval)))
          (error "interval-scale: The dimension of the first argument (an interval) is not equal to the length of the second (a vector): "
@@ -622,7 +596,7 @@ OTHER DEALINGS IN THE SOFTWARE.
                      (vector-concatenate (map %%interval-upper-bounds intervals))))
 
 (define (interval-cartesian-product #!rest intervals)
-  (cond ((not (%%every interval? intervals))
+  (cond ((not (every interval? intervals))
          (apply error "interval-cartesian-product: Not all arguments are intervals: " intervals))
         (else
          (%%interval-cartesian-product intervals))))
@@ -631,10 +605,10 @@ OTHER DEALINGS IN THE SOFTWARE.
   (cond ((not (interval? interval))
          (error "interval-dilate: The first argument is not an interval: " interval lower-diffs upper-diffs))
         ((not (and (vector? lower-diffs)
-                   (%%vector-every (lambda (x) (exact-integer? x)) lower-diffs)))
+                   (vector-every (lambda (x) (exact-integer? x)) lower-diffs)))
          (error "interval-dilate: The second argument is not a vector of exact integers: " interval lower-diffs upper-diffs))
         ((not (and (vector? upper-diffs)
-                   (%%vector-every (lambda (x) (exact-integer? x)) upper-diffs)))
+                   (vector-every (lambda (x) (exact-integer? x)) upper-diffs)))
          (error "interval-dilate: The third argument is not a vector of exact integers: " interval lower-diffs upper-diffs))
         ((not (fx= (vector-length lower-diffs)
                    (vector-length upper-diffs)
@@ -643,7 +617,7 @@ OTHER DEALINGS IN THE SOFTWARE.
         (else
          (let ((new-lower-bounds (vector-map (lambda (x y) (+ x y)) (%%interval-lower-bounds interval) lower-diffs))
                (new-upper-bounds (vector-map (lambda (x y) (+ x y)) (%%interval-upper-bounds interval) upper-diffs)))
-           (if (%%vector-every (lambda (x y) (<= x y)) new-lower-bounds new-upper-bounds)
+           (if (vector-every (lambda (x y) (<= x y)) new-lower-bounds new-upper-bounds)
                (%%finish-interval new-lower-bounds new-upper-bounds)
                (error "interval-dilate: Some resulting lower bounds are greater than corresponding upper bounds: " interval lower-diffs upper-diffs))))))
 
@@ -654,13 +628,13 @@ OTHER DEALINGS IN THE SOFTWARE.
                  (upper2 (%%interval-upper-bounds interval2)))
              (or (eq? upper1 upper2)
                  (and (fx= (vector-length upper1) (vector-length upper2))
-                      (%%vector-every (lambda (x y) (= x y)) upper1 upper2))))
+                      (vector-every (lambda (x y) (= x y)) upper1 upper2))))
            (let ((lower1 (%%interval-lower-bounds interval1))
                  (lower2 (%%interval-lower-bounds interval2)))
              (or (eq? lower1 lower2)
                  ;; We don't need to check that the two lower bounds
                  ;; are the same length after checking the upper bounds
-                 (%%vector-every (lambda (x y) (= x y)) lower1 lower2))))))
+                 (vector-every (lambda (x y) (= x y)) lower1 lower2))))))
 
 (define (interval= interval1 interval2)
   (cond ((not (and (interval? interval1)
@@ -670,8 +644,8 @@ OTHER DEALINGS IN THE SOFTWARE.
          (%%interval= interval1 interval2))))
 
 (define (%%interval-subset? interval1 interval2)
-  (and (%%vector-every (lambda (x y) (>= x y)) (%%interval-lower-bounds interval1) (%%interval-lower-bounds interval2))
-       (%%vector-every (lambda (x y) (<= x y)) (%%interval-upper-bounds interval1) (%%interval-upper-bounds interval2))))
+  (and (vector-every (lambda (x y) (>= x y)) (%%interval-lower-bounds interval1) (%%interval-lower-bounds interval2))
+       (vector-every (lambda (x y) (<= x y)) (%%interval-upper-bounds interval1) (%%interval-upper-bounds interval2))))
 
 (define (interval-subset? interval1 interval2)
   (cond ((not (and (interval? interval1)
@@ -686,7 +660,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 (define (%%interval-intersect intervals)
   (let ((lower-bounds (apply vector-map max (map %%interval-lower-bounds intervals)))
         (upper-bounds (apply vector-map min (map %%interval-upper-bounds intervals))))
-    (and (%%vector-every (lambda (x y) (<= x y)) lower-bounds upper-bounds)
+    (and (vector-every (lambda (x y) (<= x y)) lower-bounds upper-bounds)
          (%%finish-interval lower-bounds upper-bounds))))
 
 (define (interval-intersect interval #!rest intervals)
@@ -695,11 +669,11 @@ OTHER DEALINGS IN THE SOFTWARE.
           interval
           (error "interval-intersect: The argument is not an interval: " interval))
       (let ((intervals (cons interval intervals)))
-        (cond ((not (%%every interval? intervals))
+        (cond ((not (every interval? intervals))
                (apply error "interval-intersect: Not all arguments are intervals: " intervals))
               ((let* ((dims (map %%interval-dimension intervals))
                       (dim1 (car dims)))
-                 (not (%%every (lambda (dim) (fx= dim dim1)) (cdr dims))))
+                 (not (every (lambda (dim) (fx= dim dim1)) (cdr dims))))
                (apply error "interval-intersect: Not all arguments have the same dimension: " intervals))
               (else
                (%%interval-intersect intervals))))))
@@ -754,7 +728,7 @@ OTHER DEALINGS IN THE SOFTWARE.
         ((not (fx= (%%interval-dimension interval)
                    (length multi-index)))
          (apply error "interval-contains-multi-index?: The dimension of the first argument (an interval) does not match number of indices: " interval multi-index))
-        ((not (%%every (lambda (x) (exact-integer? x)) multi-index))
+        ((not (every (lambda (x) (exact-integer? x)) multi-index))
          (apply error "interval-contains-multi-index?: At least one multi-index component is not an exact integer: " interval multi-index))
         (else
          (%%interval-contains-multi-index?-general interval multi-index))))
@@ -986,7 +960,12 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 (define specialized-array-default-safe?
   (make-parameter
-   #f
+   ;; Does not follow the SRFI, but the default initial value should
+   ;; not cause the program to crash with a programming error.
+   ;;.Changes below now allow unsafe specialized arrays to be
+   ;; generated, but that's not the default for unsuspecting
+   ;; programmers.
+   #t
    (lambda (bool)
      (if (boolean? bool)
          bool
@@ -1001,7 +980,7 @@ OTHER DEALINGS IN THE SOFTWARE.
          (error "specialized-array-default-mutable?: The argument is not a boolean: " bool)))))
 
 
-;; An array has a domain (which is an interval) and an getter that maps that domain into some type of
+;; An array has a domain (which is an interval) and a getter that maps that domain into some type of
 ;; Scheme objects
 
 (define %%order-unknown 1) ;; can be any nonboolean
@@ -1188,7 +1167,7 @@ OTHER DEALINGS IN THE SOFTWARE.
                                  data)))))))
             '(generic s8       u8       s16       u16       s32       u32       s64       u64       f32       f64       char)
             '(vector  s8vector u8vector s16vector u16vector s32vector u32vector s64vector u64vector f32vector f64vector string)
-            '(#f      0        0        0         0         0         0         0         0         0.0        0.0     #\0)
+            '(#f      0        0        0         0         0         0         0         0         0.0        0.0     #\null)
             `((lambda (x) #t)                        ; generic
               (lambda (x)                            ; s8
                 (and (fixnum? x)
@@ -1463,7 +1442,7 @@ OTHER DEALINGS IN THE SOFTWARE.
                                      ;; no overflow
                                      (construct-representation sign-bit
                                                                (fx+ exponent ,exponent-bias)
-                                                               (fxand possible-mantissa ,mantissa-mask))
+                                                               possible-mantissa)
                                      ;; overflow
                                      (if (fx= exponent ,exponent-bias)
                                          ;; maximum finite exponent, overflow to infinity
@@ -1836,7 +1815,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 (define (%%indexer-generic base lower-bounds increments)
   (let ((result
-         (if (%%every (lambda (x) (eqv? x 0)) lower-bounds)
+         (if (every (lambda (x) (eqv? x 0)) lower-bounds)
              (lambda multi-index
                (let loop ((result base)
                           (indices multi-index)
@@ -2112,7 +2091,8 @@ OTHER DEALINGS IN THE SOFTWARE.
     (let ((getter
            (cond ((%%interval-empty? domain)
                   (%%empty-getter domain))
-                 (#t; safe?                    ;; All array getters and setters check their arguments
+                 (safe?
+                  ;; specialized-array-default-safe? is now #t initially, so the default is safe? but can be changed
                   (case (%%interval-dimension domain)
                     ((0)  (lambda ()
                             (storage-class-getter body (indexer))))
@@ -2155,7 +2135,7 @@ OTHER DEALINGS IN THE SOFTWARE.
                                   (else
                                    (storage-class-getter body (indexer i j k l))))))
                     (else (lambda multi-index
-                            (cond ((not (%%every (lambda (x) (exact-integer? x)) multi-index))
+                            (cond ((not (every (lambda (x) (exact-integer? x)) multi-index))
                                    (apply error "array-getter: multi-index component is not an exact integer: " multi-index))
                                   ((not (fx= (%%interval-dimension domain) (length multi-index)))
                                    (apply error "array-getter: multi-index is not the correct dimension: " domain multi-index))
@@ -2175,7 +2155,8 @@ OTHER DEALINGS IN THE SOFTWARE.
            (and mutable?
                 (cond ((%%interval-empty? domain)
                        (%%empty-setter domain))
-                      (#t; safe?                    ;; All array getters and setters check their arguments
+                      (safe?
+                       ;; specialized-array-default-safe? is now #t initially, so the default is safe? but can be changed
                        (case (%%interval-dimension domain)
                          ((0)  (lambda (value)
                                  (cond ((not (checker value))
@@ -2229,7 +2210,7 @@ OTHER DEALINGS IN THE SOFTWARE.
                                        (else
                                         (storage-class-setter body (indexer i j k l) value)))))
                          (else (lambda (value . multi-index)
-                                 (cond ((not (%%every (lambda (x) (exact-integer? x)) multi-index))
+                                 (cond ((not (every (lambda (x) (exact-integer? x)) multi-index))
                                         (apply error "array-setter: multi-index component is not an exact integer: " multi-index))
                                        ((not (fx= (%%interval-dimension domain) (length multi-index)))
                                         (apply error "array-setter: multi-index is not the correct dimension: " domain multi-index))
@@ -2330,11 +2311,8 @@ OTHER DEALINGS IN THE SOFTWARE.
          (error "make-specialized-array-from-data: The second argument is not a storage class: " data storage-class))
         ((not ((storage-class-data? storage-class) data))
          (error "make-specialized-array-from-data: The first argument is not compatible with the storage class: " data))
-        ((and mutable?
-              (not (##mutable? data)))
-         (error "make-specialized-array-from-data: Cannot make mutable array from immutable data: " data storage-class mutable? safe?))
         (else
-         (%%make-specialized-array-from-data data storage-class mutable? safe?))))
+         (%%make-specialized-array-from-data data storage-class (and mutable? (##mutable? data)) safe?))))
 
 
 (define (%%make-specialized-array-from-data data storage-class mutable? safe?)
@@ -2370,9 +2348,9 @@ OTHER DEALINGS IN THE SOFTWARE.
                              (first
                               (car sublists)))
                         (and first
-                             (%%every (lambda (l)
-                                        (equal? first l))
-                                      (cdr sublists))
+                             (every (lambda (l)
+                                      (equal? first l))
+                                    (cdr sublists))
                              (cons len first)))))))))
 
   (define (nested-list->array dimension nested-data)
@@ -2452,9 +2430,9 @@ OTHER DEALINGS IN THE SOFTWARE.
                              (first
                               (vector-ref sublists 0)))
                         (and first
-                             (%%vector-every (lambda (l)
-                                               (equal? first l))
-                                             sublists)
+                             (vector-every (lambda (l)
+                                             (equal? first l))
+                                           sublists)
                              (cons len first)))))))))
 
   (define (nested-vector->array dimension nested-data)
@@ -2714,29 +2692,27 @@ OTHER DEALINGS IN THE SOFTWARE.
                       (storage-class-copier (%%array-storage-class destination))
                       (%%array-packed? source))
                  ;; do a block copy
-                 (begin
-                   (if (not (%%interval-empty? (%%array-domain source)))
-                       (let* ((source-indexer
-                               (%%array-indexer source))
-                              (destination-indexer
-                               (%%array-indexer destination))
-                              (copier
-                               (storage-class-copier (%%array-storage-class source)))
-                              (initial-destination-index
-                               (%%interval-lower-bounds->list (%%array-domain destination)))
-                              (destination-start
-                               (apply destination-indexer initial-destination-index))
-                              (initial-source-index
-                               (%%interval-lower-bounds->list (%%array-domain source)))
-                              (source-start
-                               (apply source-indexer initial-source-index))
-                              (source-end
-                               (fx+ source-start (%%interval-volume (%%array-domain source)))))
-                         (copier (%%array-body destination)
-                                 destination-start
-                                 (%%array-body source)
-                                 source-start
-                                 source-end)))
+                 (let* ((source-indexer
+                         (%%array-indexer source))
+                        (destination-indexer
+                         (%%array-indexer destination))
+                        (copier
+                         (storage-class-copier (%%array-storage-class source)))
+                        (initial-destination-index
+                         (%%interval-lower-bounds->list (%%array-domain destination)))
+                        (destination-start
+                         (apply destination-indexer initial-destination-index))
+                        (initial-source-index
+                         (%%interval-lower-bounds->list (%%array-domain source)))
+                        (source-start
+                         (apply source-indexer initial-source-index))
+                        (source-end
+                         (fx+ source-start (%%interval-volume (%%array-domain source)))))
+                   (copier (%%array-body destination)
+                           destination-start
+                           (%%array-body source)
+                           source-start
+                           source-end)
                    "Block copy")
                  ;; We can step through the elements of destination in order,
                  ;; and the getter of the source doesn't capture any continuations.
@@ -3330,27 +3306,7 @@ OTHER DEALINGS IN THE SOFTWARE.
               (%%array-setter array)))
 
 (define (%%specialized-array-extract array new-domain)
-
-  ;; (%%specialized-array-share array new-domain values)
-
-  ;; We can speed this by calling make-%%array directly,
-  ;; and so avoid a call to %%compose-indexers with values as
-  ;; new-domain->old-domain and avoid the computation of the
-  ;; new indexer, getter, and setter.
-
-  (make-%%array new-domain
-                (if (%%interval-empty? new-domain)
-                    (%%empty-getter new-domain)
-                    (%%array-getter array))
-                (and (%%array-setter array)   ;; If array has no setter, then don't add one to extracted array
-                     (if (%%interval-empty? new-domain)
-                         (%%empty-setter new-domain)
-                         (%%array-setter array)))
-                (%%array-storage-class array)
-                (%%array-body array)
-                (%%array-indexer array)
-                (%%array-safe? array)
-                %%order-unknown))
+  (%%specialized-array-share array new-domain values))
 
 (define (%%array-extract array new-domain)
   (cond ((specialized-array? array)
@@ -3395,30 +3351,22 @@ OTHER DEALINGS IN THE SOFTWARE.
                 (widths (%%interval-widths domain)))
            (let slice-widths-check ((k 0))
              (if (fx< k A-dim)
-                 (let ((S_k (vector-ref slice-widths k)))
-                   (if (eqv? (%%interval-width domain k) 0)
-                       (if (and (vector? S_k)
-                                (not (fx= (vector-length S_k) 0))
-                                (%%vector-every (lambda (x) (eqv? x 0)) S_k))
-                           (slice-widths-check (fx+ k 1))
-                           (error (string-append "array-tile: Axis "
-                                                 (number->string k)
-                                                 " of the domain of the first argument has width 0, but element "
-                                                 (number->string k)
-                                                 " of the second argument is not a nonempty vector of exact zeros: ")
-                                  A slice-widths))
-                       (if (or (and (exact-integer? S_k)
-                                    (positive? S_k))
-                               (and (vector? S_k)
-                                    (%%vector-every (lambda (x) (and (exact-integer? x) (not (negative? x)))) S_k)
-                                    (= (%%vector-fold-left (lambda (x y) (+ x y)) 0 S_k) (%%interval-width domain k))))
-                           (slice-widths-check (fx+ k 1))
-                           (error (string-append "array-tile: Axis "
-                                                 (number->string k)
-                                                 " of the domain of the first argument has nonzero width, but element "
-                                                 (number->string k)
-                                                 " of the second argument is neither an exact positive integer nor a vector of nonnegative exact integers summing to that width: ")
-                                  A slice-widths))))
+                 (let ((S_k (vector-ref slice-widths k))
+                       (width (%%interval-width domain k)))
+                   (if (or (and (exact-integer? S_k)
+                                (positive? S_k)
+                                (not (eqv? width 0)))
+                           (and (vector? S_k)
+                                (not (eqv? (vector-length S_k) 0))
+                                (vector-every (lambda (x) (and (exact-integer? x) (not (negative? x)))) S_k)
+                                (= (%%vector-fold-left (lambda (x y) (+ x y)) 0 S_k) width)))
+                       (slice-widths-check (fx+ k 1))
+                       (error (string-append "array-tile: Element "
+                                             (number->string k)
+                                             " of the second argument is neither a positive exact integer (allowed if the width of the first argument's corresponding axis is positive) nor a nonempty vector of nonnegative exact integers summing to the width of axis "
+                                             (number->string k)
+                                             " of the first argument: ")
+                              A slice-widths)))
                  (let ((offsets (make-vector A-dim)))
                    (do ((k 0 (fx+ k 1)))
                        ((fx= k A-dim))
@@ -3761,7 +3709,7 @@ OTHER DEALINGS IN THE SOFTWARE.
     (cond ((not (array? array))
            (error "array-reverse: The first argument is not an array: " array flip?))
           ((not (and (vector? flip?)
-                     (%%vector-every (lambda (x) (boolean? x)) flip?)))
+                     (vector-every (lambda (x) (boolean? x)) flip?)))
            (error "array-reverse: The second argument is not a vector of booleans: " array flip?))
           ((not (fx= (%%array-dimension array)
                      (vector-length flip?)))
@@ -3876,11 +3824,11 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 (define (array-sample array scales)
   (cond ((not (and (array? array)
-                   (%%vector-every (lambda (x) (eqv? x 0)) (%%interval-lower-bounds (%%array-domain array)))))
+                   (vector-every (lambda (x) (eqv? x 0)) (%%interval-lower-bounds (%%array-domain array)))))
          (error "array-sample: The first argument is not an array whose domain has zero lower bounds: " array scales))
         ((not (and (vector? scales)
-                   (%%vector-every (lambda (x) (exact-integer? x)) scales)
-                   (%%vector-every (lambda (x) (positive? x)) scales)))
+                   (vector-every (lambda (x) (exact-integer? x)) scales)
+                   (vector-every (lambda (x) (positive? x)) scales)))
          (error "array-sample: The second argument is not a vector of positive, exact, integers: " array scales))
         ((not (fx= (vector-length scales) (%%array-dimension array)))
          (error "array-sample: The dimension of the first argument (an array) is not equal to the length of the second (a vector): "
@@ -4029,7 +3977,7 @@ OTHER DEALINGS IN THE SOFTWARE.
                   (else
                    (getter i j k l)))))
      (else (lambda multi-index
-             (cond ((not (%%every exact-integer? multi-index))
+             (cond ((not (every exact-integer? multi-index))
                     (apply error (string-append caller "multi-index component is not an exact integer: ") multi-index))
                    ((not (= (length multi-index) (%%interval-dimension domain)))
                     (apply error (string-append caller "multi-index is not the correct dimension: ") domain multi-index))
@@ -4161,27 +4109,23 @@ OTHER DEALINGS IN THE SOFTWARE.
   (call-with-values
       (lambda () (%%interval-projections (%%array-domain array) right-dimension))
     (lambda (left-interval right-interval)
-      (let* ((input-array-in-order?
-              (%%array-in-order? array))
-             (in-order?
-              (or (and (boolean? input-array-in-order?)  ;; we know whether the input array is in order
-                       input-array-in-order?)            ;; and it is in order
-                  ;; But even if it isn't, the subarrays may be in order, so we
-                  ;; compute once whether all the subarrays are in order.
-                  ;; We do this without actually instantiating one of the subarrays.
-                  (%%compute-array-packed?
-                   ;; The same domain for all subarrays.
-                   right-interval
-                   ;; The new indexer computed using the general, nonspecialized new-domain->old-domain function,
-                   ;; applied specifically to the first multi-index in the left-interval.
-                   ;; If any of the arrays are empty then the indexers could be nonsense, but
-                   ;; %%compute-array-packed? special-cases empty intervals.
-                   (%%compose-indexers (%%array-indexer array)
-                                       right-interval
-                                       (lambda right-multi-index
-                                         (apply values
-                                                (append (%%interval-lower-bounds->list left-interval)
-                                                        right-multi-index))))))))
+      (let ((in-order?
+             (or (%%array-packed? array) ;; compute it if necessary, will be #t if array is empty
+                 ;; But even if it isn't, the subarrays may be in order, so we
+                 ;; compute once whether all the subarrays are in order.
+                 ;; We do this without actually instantiating one of the subarrays.
+                 (let ((left-multi-index (%%interval-lower-bounds->list left-interval)))
+                   (%%compute-array-packed?
+                    ;; The same domain for all subarrays.
+                    right-interval
+                    ;; The new indexer computed using the general, nonspecialized new-domain->old-domain function,
+                    ;; applied specifically to the first multi-index in the left-interval.
+                    (%%compose-indexers (%%array-indexer array)
+                                        right-interval
+                                        (lambda right-multi-index
+                                          (apply values
+                                                 (append left-multi-index
+                                                         right-multi-index)))))))))
         (%%make-safe-immutable-array
          left-interval
          (case (%%interval-dimension left-interval)
@@ -4313,9 +4257,9 @@ OTHER DEALINGS IN THE SOFTWARE.
 (define (array-map f array #!rest arrays)
   (cond ((not (procedure? f))
          (apply error "array-map: The first argument is not a procedure: " f array arrays))
-        ((not (%%every array? (cons array arrays)))
+        ((not (every array? (cons array arrays)))
          (apply error "array-map: Not all arguments after the first are arrays: " f array arrays))
-        ((not (%%every (lambda (d) (%%interval= d (%%array-domain array))) (map %%array-domain arrays)))
+        ((not (every (lambda (d) (%%interval= d (%%array-domain array))) (map %%array-domain arrays)))
          (apply error "array-map: Not all arrays have the same domain: " f array arrays))
         (else
          ;; safe
@@ -4331,9 +4275,9 @@ OTHER DEALINGS IN THE SOFTWARE.
 (define (array-for-each f array #!rest arrays)
   (cond ((not (procedure? f))
          (apply error "array-for-each: The first argument is not a procedure: " f array arrays))
-        ((not (%%every array? (cons array arrays)))
+        ((not (every array? (cons array arrays)))
          (apply error "array-for-each: Not all arguments after the first are arrays: " f array arrays))
-        ((not (%%every (lambda (d) (%%interval= d (%%array-domain array))) (map %%array-domain arrays)))
+        ((not (every (lambda (d) (%%interval= d (%%array-domain array))) (map %%array-domain arrays)))
          (apply error "array-for-each: Not all arrays have the same domain: " f array arrays))
         (else
          (%%array-for-each f array arrays))))
@@ -4450,9 +4394,9 @@ OTHER DEALINGS IN THE SOFTWARE.
 (define (array-every f array #!rest arrays)
   (cond ((not (procedure? f))
          (apply error "array-every: The first argument is not a procedure: " f array arrays))
-        ((not (%%every array? (cons array arrays)))
+        ((not (every array? (cons array arrays)))
          (apply error "array-every: Not all arguments after the first are arrays: " f array arrays))
-        ((not (%%every (lambda (d) (%%interval= d (%%array-domain array))) (map %%array-domain arrays)))
+        ((not (every (lambda (d) (%%interval= d (%%array-domain array))) (map %%array-domain arrays)))
          (apply error "array-every: Not all arrays have the same domain: " f array arrays))
         (else
          (%%array-every f array arrays))))
@@ -4464,9 +4408,9 @@ OTHER DEALINGS IN THE SOFTWARE.
 (define (array-any f array #!rest arrays)
   (cond ((not (procedure? f))
          (apply error "array-any: The first argument is not a procedure: " f array arrays))
-        ((not (%%every array? (cons array arrays)))
+        ((not (every array? (cons array arrays)))
          (apply error "array-any: Not all arguments after the first are arrays: " f array arrays))
-        ((not (%%every (lambda (d) (%%interval= d (%%array-domain array))) (map %%array-domain arrays)))
+        ((not (every (lambda (d) (%%interval= d (%%array-domain array))) (map %%array-domain arrays)))
          (apply error "array-any: Not all arrays have the same domain: " f array arrays))
         (else
          (%%array-any f array arrays))))
@@ -4474,9 +4418,9 @@ OTHER DEALINGS IN THE SOFTWARE.
 (define (array-fold-left op id array . arrays)
   (cond ((not (procedure? op))
          (apply error "array-fold-left: The first argument is not a procedure: " op id array arrays))
-        ((not (%%every array? (cons array arrays)))
+        ((not (every array? (cons array arrays)))
          (apply error "array-fold-left: Not all arguments after the first two are arrays: " op id array arrays))
-        ((not (%%every (lambda (a) (%%interval= (%%array-domain a) (%%array-domain array))) arrays))
+        ((not (every (lambda (a) (%%interval= (%%array-domain a) (%%array-domain array))) arrays))
          (apply error "array-fold-left: Not all arrays have the same domain: " op id array arrays))
         ((null? arrays)
          (%%interval-fold-left (%%array-getter array) op id (%%array-domain array)))
@@ -4498,9 +4442,9 @@ OTHER DEALINGS IN THE SOFTWARE.
 (define (array-fold-right op id array . arrays)
   (cond ((not (procedure? op))
          (apply error "array-fold-right: The first argument is not a procedure: " op id array arrays))
-        ((not (%%every array? (cons array arrays)))
+        ((not (every array? (cons array arrays)))
          (apply error "array-fold-right: Not all arguments after the first two are arrays: " op id array arrays))
-        ((not (%%every (lambda (a) (%%interval= (%%array-domain a) (%%array-domain array))) arrays))
+        ((not (every (lambda (a) (%%interval= (%%array-domain a) (%%array-domain array))) arrays))
          (apply error "array-fold-right: Not all arrays have the same domain: " op id array arrays))
         ((null? arrays)
          (%%interval-fold-right (%%array-getter array) op id (%%array-domain array)))
@@ -4521,24 +4465,24 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 (define %%array-reduce
   (let ((%%array-reduce-base (list 'base)))
-    (lambda (sum A caller)
-      (if (%%array-empty? A)
-          (error (string-append caller "Attempting to reduce over an empty array: ") sum A)
-          (%%interval-fold-left (%%array-getter A)
-                                (lambda (id a)
-                                  (if (eq? id %%array-reduce-base)
-                                      a
-                                      (sum id a)))
-                                %%array-reduce-base
-                                (%%array-domain A))))))
+    (lambda (sum A)
+      (%%interval-fold-left (%%array-getter A)
+                            (lambda (id a)
+                              (if (eq? id %%array-reduce-base)
+                                  a
+                                  (sum id a)))
+                            %%array-reduce-base
+                            (%%array-domain A)))))
 
 (define (array-reduce sum A)
   (cond ((not (array? A))
          (error "array-reduce: The second argument is not an array: " sum A))
         ((not (procedure? sum))
          (error "array-reduce: The first argument is not a procedure: " sum A))
+        ((%%array-empty? A)
+         (error "array-reduce: Attempting to reduce over an empty array: " sum A))
         (else
-         (%%array-reduce sum A "array-reduce: "))))
+         (%%array-reduce sum A))))
 
 (define (%%array->reversed-list array)
   ;; safe in the face of (%%array-getter array) capturing
@@ -4711,12 +4655,9 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 (define (%%array-inner-product A f g B)
   ;; Copy the curried arrays for efficiency.
-  ;; If any of the curried arrays are empty, that's OK,
-  ;; If the elements of the curried arrays are empty, then
-  ;; the error check in %%array-reduce will catch it.
   (%%array-outer-product
    (lambda (a b)
-     (%%array-reduce f (%%array-map g a (list b)) "array-inner-product: "))
+     (%%array-reduce f (%%array-map g a (list b))))
    (array-copy (%%array-curry A 1))
    (array-copy (%%array-curry (%%array-permute B (%%index-rotate (%%array-dimension B) 1)) 1))))
 
@@ -4742,6 +4683,9 @@ OTHER DEALINGS IN THE SOFTWARE.
                           (%%interval-upper-bound B-dom 0)))))
          (error (string-append "array-inner-product: The bounds of the last dimension of the first argument "
                                "are not the same as the bounds of the first dimension of the fourth argument: ")
+                A f g B))
+        ((eqv? (%%interval-width (%%array-domain B) 0) 0)
+         (error "array-inner-product: The width of the first axis of the fourth argument is zero: "
                 A f g B))
         (else
          (%%array-inner-product A f g B))))
@@ -4823,8 +4767,8 @@ OTHER DEALINGS IN THE SOFTWARE.
 
   (cond ((not (and (list? arrays)
                    (not (null? arrays))
-                   (%%every array? arrays)
-                   (%%every (lambda (a) (%%interval= (%%array-domain a) (%%array-domain (car arrays)))) (cdr arrays))))
+                   (every array? arrays)
+                   (every (lambda (a) (%%interval= (%%array-domain a) (%%array-domain (car arrays)))) (cdr arrays))))
          (error (string-append caller "Expecting a nonnull list of arrays with the same domains as the second argument: ") k arrays))
         ((not (and (fixnum? k)
                    (fx<= 0 k (%%array-dimension (car arrays)))))
@@ -4837,7 +4781,8 @@ OTHER DEALINGS IN THE SOFTWARE.
         ((not (boolean? safe?))
          (error (string-append caller "Expecting a boolean as the fifth argument: ") k arrays storage-class mutable? safe?))
         (else
-         (%%%array-stack k arrays storage-class mutable? safe? caller call/cc-safe?))))
+         ;; We copy the arrays argument in case any of the array getters modify the arrays list argument
+         (%%%array-stack k (list-copy arrays) storage-class mutable? safe? caller call/cc-safe?))))
 
 (define (array-append k
                       arrays
@@ -4864,8 +4809,8 @@ OTHER DEALINGS IN THE SOFTWARE.
 
   (cond ((not (and (list? arrays)
                    (not (null? arrays))
-                   (%%every array? arrays)
-                   (%%every (lambda (a) (= (%%array-dimension a) (%%array-dimension (car arrays)))) (cdr arrays))))
+                   (every array? arrays)
+                   (every (lambda (a) (= (%%array-dimension a) (%%array-dimension (car arrays)))) (cdr arrays))))
          (error (string-append caller "Expecting as the second argument a nonnull list of arrays with the same dimension: ") k arrays))
         ((not (and (fixnum? k)
                    (fx< -1 k (%%array-dimension (car arrays)))))
@@ -4878,15 +4823,15 @@ OTHER DEALINGS IN THE SOFTWARE.
         ((not (boolean? safe?))
          (error (string-append caller "Expecting a boolean as the fifth argument: ") k arrays storage-class mutable? safe?))
         ((not (let ((first-domain (%%array-domain (car arrays))))
-                (%%every (lambda (d)
-                           (%%every (lambda (i)
-                                      (or (fx= i k)
-                                          (and (= (%%interval-lower-bound first-domain i)  ;; may not be fixnums
-                                                  (%%interval-lower-bound d            i))
-                                               (= (%%interval-upper-bound first-domain i)
-                                                  (%%interval-upper-bound d            i)))))
-                                    (iota (%%interval-dimension first-domain))))
-                         (cdr (map %%array-domain arrays)))))
+                (every (lambda (d)
+                         (every (lambda (i)
+                                  (or (fx= i k)
+                                      (and (= (%%interval-lower-bound first-domain i)  ;; may not be fixnums
+                                              (%%interval-lower-bound d            i))
+                                           (= (%%interval-upper-bound first-domain i)
+                                              (%%interval-upper-bound d            i)))))
+                                (iota (%%interval-dimension first-domain))))
+                       (cdr (map %%array-domain arrays)))))
          (error (string-append caller "Expecting as the second argument a nonnull list of arrays with the same upper and lower bounds (except for index "
                                (number->string k)
                                "): ")
@@ -4906,6 +4851,8 @@ OTHER DEALINGS IN THE SOFTWARE.
                              (cdr arrays))))))
            (lambda (axis-subdividers kth-size)
              (let* ((arrays
+                     (list-copy arrays))  ;; in case any of the array getters modify the arrays list argument
+                    (arrays
                      (if call/cc-safe?
                          (map (lambda (A)
                                 (%%->specialized-array A storage-class caller))
@@ -5058,7 +5005,7 @@ OTHER DEALINGS IN THE SOFTWARE.
                   (error (string-append caller "Not all elements of the first argument (an array) are arrays: ") A-arg))
                  ((not (%%array-every (lambda (a) (fx= (%%array-dimension a) A_dim)) A '()))
                   (error (string-append caller "Not all elements of the first argument (an array) have the same dimension as the first argument itself: ") A-arg))
-                 ((not (%%vector-every
+                 ((not (vector-every
                         (lambda (k)       ;; the direction
                           (let ((slices   ;; the slices in that direction
                                  (%%array-curry (%%array-permute A (%%index-first A_dim k))
@@ -5070,7 +5017,7 @@ OTHER DEALINGS IN THE SOFTWARE.
                                              (%%interval-width (%%array-domain a) k))
                                            (%%array->list slice))))
                                  (or (null? kth-width-of-arrays-in-slice)
-                                     (%%every (lambda (w) (= (car kth-width-of-arrays-in-slice) w)) (cdr kth-width-of-arrays-in-slice)))))
+                                     (every (lambda (w) (= (car kth-width-of-arrays-in-slice) w)) (cdr kth-width-of-arrays-in-slice)))))
                              slices '())))
                         ks))
                   (error (string-append caller "Cannot stack array elements of the first argument into result array: ") A-arg))

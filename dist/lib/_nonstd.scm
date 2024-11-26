@@ -272,30 +272,86 @@
      src
      3
      (lambda (location-src expr-src)
-       (let* ((loc (##desourcify location-src))
-              (len (##proper-length loc)))
-         (if (##not (or (##eqv? len 3) (##eqv? len 4)))
+       (let ((loc (##desourcify location-src)))
+         (if (##not (##pair? loc))
              (syntax-err)
-             (let ((path (##car loc))
-                   (line (##cadr loc))
-                   (col (##caddr loc))
-                   (deep? (if (##eqv? len 3) #f (##cadddr loc))))
-               (if (and (##string? path)
-                        (##fixnum? line)
-                        (##fixnum? col)
-                        (##fx>= line 1)
-                        (##fx>= col 1))
+             (let ((path
+                    (let ((path (##car loc)))
+                      (set! loc (##cdr loc))
+                      path))
+                   (start-line
+                    (let ((start-line (if (##pair? loc) (##car loc) '())))
+                      (if (##fixnum? start-line)
+                          (begin
+                            (set! loc (##cdr loc))
+                            start-line)
+                          1)))
+                   (start-col
+                    (let ((start-col (if (##pair? loc) (##car loc) '())))
+                      (if (##fixnum? start-col)
+                          (begin
+                            (set! loc (##cdr loc))
+                            start-col)
+                          1)))
+                   (end-line
+                    (let ((end-line (if (##pair? loc) (##car loc) '())))
+                      (if (##fixnum? end-line)
+                          (begin
+                            (set! loc (##cdr loc))
+                            end-line)
+                          #f)))
+                   (end-col
+                    (let ((end-col (if (##pair? loc) (##car loc) '())))
+                      (if (##fixnum? end-col)
+                          (begin
+                            (set! loc (##cdr loc))
+                            end-col)
+                          #f)))
+                   (deep?
+                    (let ((deep? (if (##pair? loc) (##car loc) '())))
+                      (if (##boolean? deep?)
+                          (begin
+                            (set! loc (##cdr loc))
+                            deep?)
+                          #f))))
+               (if (and (##null? loc)
+                        (##string? path)
+                        (##fx> start-line 0)
+                        (##fx> start-col 0))
                    (let* ((container
                            (##path->container path))
-                          (filepos
-                           (##make-filepos (##fx- line 1) (##fx- col 1) 0))
-                          (locat
-                           (##make-locat container filepos)))
-                     (##make-source
-                      (if deep?
-                          (##desourcify expr-src)
-                          (##source-strip expr-src))
-                      locat))
+                          (start-filepos
+                           (##make-filepos (##fx- start-line 1)
+                                           (##fx- start-col 1)
+                                           0)))
+
+                     (define (done locat)
+                       (##make-source
+                        (if deep?
+                            (##desourcify expr-src)
+                            (##source-strip expr-src))
+                        locat))
+
+                     (cond ((and (##not end-line) (##not end-col))
+                            (done
+                             (##make-locat container start-filepos #f)))
+                           ((and (##fixnum? end-line)
+                                 (##fixnum? end-col)
+                                 (##fx>= end-line start-line)
+                                 (##fx> end-col
+                                        (if (##fx= end-line start-line)
+                                            start-col
+                                            0)))
+                            (let ((end-filepos
+                                   (##make-filepos (##fx- end-line 1)
+                                                   (##fx- end-col 1)
+                                                   0)))
+                              (done
+                               (##make-locat container
+                                             start-filepos
+                                             end-filepos))))
+                           (else
+                            (syntax-err))))
                    (syntax-err)))))))))
 
 ;;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3011,6 +3067,20 @@
 (define-prim (executable-path)
   (##executable-path))
 
+(define-prim (##process-mnemonic-identifier)
+  (let* ((pcl ##processed-command-line)
+	 (path (if (##pair? pcl)
+		   (##car pcl)
+		   (let ((exec-path (##os-executable-path)))
+		     (if (##string? exec-path)
+			 exec-path
+			 #f)))))
+    (##string-append (if path
+			 (##path-strip-extension (##path-strip-directory path))
+			 "process")
+		     "-"
+		     (##number->string (##os-getpid)))))
+
 ;;;----------------------------------------------------------------------------
 
 ;;; Filesystem operations.
@@ -3042,19 +3112,14 @@
            (let* ((prefix
                    (or path
                        (##path-expand
-                        (##string-append
-                         (##path-strip-directory (##executable-path))
-                         "-temp")
+                        (##string-append (##process-mnemonic-identifier) "-temp")
                         (##os-path-tempdir))))
-                  (pid
-                   (##os-getpid))
                   (permissions
                    (##psettings->permissions psettings #o777)))
              (let loop ((i 0))
                (let* ((resolved-path
                        (##path-resolve
                         (##string-append prefix
-                                         (##number->string pid)
                                          (if (##fx= i 0)
                                              ""
                                              (##number->string i)))))

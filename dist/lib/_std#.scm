@@ -83,6 +83,11 @@
             (macro-fail-check-proper-or-circular-list ,arg-id ,form)))
     ,expr))
 
+;; The finite-list type excludes circular lists.
+
+(define-check-type (list finite-list) #f
+  (lambda (obj) #t)) ;; defer detailed checks to logic traversing the list
+
 ;;; Pair types.
 
 (define-check-type pair 'pair
@@ -346,6 +351,7 @@
     (define prim-vect-set!-fixnum  (sym "##" name '-set!-fixnum))
     (define prim-vect-set          (sym "##" name '-set))
     (define prim-vect-set-small    (sym "##" name '-set-small))
+    (define prim-vect-swap!        (sym "##" name '-swap!))
     (define prim-vect->list        (sym "##" name '->list))
     (define prim-list->vect        (sym '##list-> name))
     (define prim-vect-copy         (sym "##" name '-copy))
@@ -376,6 +382,7 @@
     (define vect-set!-fixnum       (sym name '-set!-fixnum))
     (define vect-set               (sym name '-set))
     (define vect-set-small         (sym name '-set-small))
+    (define vect-swap!             (sym name '-swap!))
     (define vect->list             (sym name '->list))
     (define list->vect             (sym 'list-> name))
     (define vect->string           (sym name '->string))
@@ -477,6 +484,7 @@
                                                                            (loop2 (##cdr x)
                                                                                   (##fx+ i 1))))))
                                                                    vect))))))))))))))))))))
+
              `((define-procedure (,vect (elems ,elem-type) ...)
                  (let loop1 ((x elems) (n 0))
                    (if (pair? x)
@@ -550,6 +558,25 @@
                                       (,prim-vect-length ,name)))
                                   (,elem-name ,elem-type))
                  (,prim-vect-set ,name k ,elem-name))))
+
+       (define-primitive (,vect-swap! ,name i j)
+         (let ((temp (,prim-vect-ref ,name i)))
+           (,prim-vect-set! ,name i (,prim-vect-ref ,name j))
+           (,prim-vect-set! ,name j temp)
+           ,name))
+
+       ,@(if (memq name '(values))
+             '()
+             `((define-procedure (,vect-swap!
+                                  (,name ,name)
+                                  (i (index-range
+                                      0
+                                      (,prim-vect-length ,name)))
+                                  (j (index-range
+                                      0
+                                      (,prim-vect-length ,name))))
+                 (,prim-vect-swap! ,name i j)
+                 (void))))
 
        (define-primitive (,vect->list ,name
                                       (start object
@@ -1235,8 +1262,8 @@ end-of-code
                                                  (if (##fx> len-arg max-len)
                                                      (loop (##cdr lst)
                                                            (##cons arg rev-x-y)
+                                                           min-len
                                                            len-arg
-                                                           max-len
                                                            arg-num
                                                            (##fx+ arg-num 1))
                                                      (loop (##cdr lst)
@@ -1333,8 +1360,8 @@ end-of-code
                                                  (if (##fx> len-arg max-len)
                                                      (loop (##cdr lst)
                                                            (##cons arg rev-x-y)
+                                                           min-len
                                                            len-arg
-                                                           max-len
                                                            arg-num
                                                            (##fx+ arg-num 1))
                                                      (loop (##cdr lst)
@@ -1352,6 +1379,7 @@ end-of-code
                                               ,vect-for-each
                                               proc
                                               x-y))))))))))))
+
                )
 
              '())

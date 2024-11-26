@@ -17,7 +17,7 @@ _cst6__srfi_2f_69 = _i("##type-5-A7AB629D-EAB0-422F-8005-08B2282E04FC");
 
 _cst14__srfi_2f_69 = _i("flags");
 
-_cst7__srfi_2f_69 = new _Structure([new _Structure([null,_i("##type-5"),_i("type"),8,!1,[_i("id"),1,!1,_i("name"),5,!1,_cst14__srfi_2f_69,5,!1,_i("super"),5,!1,_i("fields"),5,!1]]),_cst6__srfi_2f_69,_i("table"),29,!1,[_i("test"),1,!1,_i("hash"),1,!1,_i("init"),1,!1,_i("hashtable"),1,!1,_cst14__srfi_2f_69,1,!1]]);
+_cst7__srfi_2f_69 = new _Structure([new _Structure([null,_i("##type-5"),_i("type"),26,!1,[_i("id"),1,!1,_i("name"),5,!1,_cst14__srfi_2f_69,5,!1,_i("super"),5,!1,_i("fields"),5,!1]]),_cst6__srfi_2f_69,_i("table"),29,!1,[_i("test"),1,!1,_i("hash"),1,!1,_i("init"),1,!1,_i("hashtable"),1,!1,_cst14__srfi_2f_69,1,!1]]);
 
 _cst24__srfi_2f_69 = _i("ht");
 
