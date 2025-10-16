@@ -2,7 +2,7 @@
 
 ;;; File: "_std#.scm"
 
-;;; Copyright (c) 1994-2023 by Marc Feeley, All Rights Reserved.
+;;; Copyright (c) 1994-2025 by Marc Feeley, All Rights Reserved.
 
 ;;;============================================================================
 
@@ -370,6 +370,7 @@
     (define prim-subvect-fill!     (sym '##sub name '-fill!))
     (define prim-vect-shrink!      (sym "##" name '-shrink!))
     (define prim-vect-equal?       (sym "##" name '-equal?))
+    (define prim-vect-in-bounds?   (sym "##" name '-in-bounds?))
 
     (define vect?                  (sym name '?))
     (define make-vect              (sym 'make- name))
@@ -894,8 +895,8 @@ end-of-code
               (case name
                 ((vector)
 #<<end-of-code
-  void *src = ___CAST(void*,&___FIELD(___ARG1,___INT(___ARG2)));
-  void *dst = ___CAST(void*,&___FIELD(___ARG4,___INT(___ARG5)));
+  void *src = ___CAST(void*,&___VECTORELEM(___ARG1,___INT(___ARG2)));
+  void *dst = ___CAST(void*,&___VECTORELEM(___ARG4,___INT(___ARG5)));
   ___SIZE_TS len = ___INT(___FIXSUB(___ARG3,___ARG2)) * ___WS;
 end-of-code
 )
@@ -986,8 +987,8 @@ end-of-code
 )
                 ((values)
 #<<end-of-code
-  void *src = ___CAST(void*,&___FIELD(___ARG1,___INT(___ARG2)));
-  void *dst = ___CAST(void*,&___FIELD(___ARG4,___INT(___ARG5)));
+  void *src = ___CAST(void*,&___FIELD(BOXVALUES,___ARG1,___INT(___ARG2)));
+  void *dst = ___CAST(void*,&___FIELD(BOXVALUES,___ARG4,___INT(___ARG5)));
   ___SIZE_TS len = ___INT(___FIXSUB(___ARG3,___ARG2)) * ___WS;
 end-of-code
 ))
@@ -1127,7 +1128,10 @@ end-of-code
                                          (##declare (generic)) ;; avoid fixnum specific ##eqv?
                                          (,elem= (,prim-vect-ref vect1 i)
                                                  (,prim-vect-ref vect2 i)))
-                                       (loop (##fx- i 1)))))))))))
+                                       (loop (##fx- i 1)))))))))
+
+               (define-prim (,prim-vect-in-bounds? vect k)
+                 (and (##fx<= 0 k) (##fx< k (,prim-vect-length vect))))))
 
        ,@(if define-map-and-for-each
 

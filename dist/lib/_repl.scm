@@ -1923,9 +1923,25 @@
 
 (define-prim (##cmd-e proc-or-cont port detail-level)
   (and proc-or-cont
-       (if (##continuation? proc-or-cont)
-           (##display-continuation-env proc-or-cont port 0 detail-level)
-           (##display-procedure-environment proc-or-cont port 0))))
+       (let ((cont (##cont-like->continuation proc-or-cont)))
+         (if cont
+             (##display-continuation-env cont port 0 detail-level)
+             (if (##interp-procedure? proc-or-cont)
+                 (##display-procedure-environment proc-or-cont port 0)
+                 (begin
+                   (##write-string "Can't display environment of " port)
+                   (##write proc-or-cont port)
+                   (##newline port)))))))
+
+(define-prim (##cont-like->continuation obj)
+  (cond ((##continuation? obj)
+         obj)
+        ((##closure? obj)
+         (and (##eq? (##subprocedure-parent (##closure-code obj))
+                     ##call-with-current-continuation)
+              (##closure-ref obj 1)))
+        (else
+         #f)))
 
 ;;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -3647,17 +3663,17 @@
 
        (define (handle proc-or-cont depth)
          (if (##eq? cmd 'v)
-             (if (##continuation? proc-or-cont)
-                 (let ((cont
-                        (##repl-first-interesting
-                         proc-or-cont)))
-                   (##repl-within cont #f #f #f))
-                 (let ((proc
-                        proc-or-cont))
-                   (##repl-within-proc
-                    proc
-                    (macro-repl-context-cont
-                     repl-context))))
+             (let ((cont
+                    (##repl-first-interesting
+                     (##cont-like->continuation proc-or-cont))))
+               (if cont
+                   (##repl-within cont #f #f #f)
+                   (let ((proc
+                          proc-or-cont))
+                     (##repl-within-proc
+                      proc
+                      (macro-repl-context-cont
+                       repl-context)))))
              (begin
                (##repl-channel-display-multiline-message
                 (lambda (port)
@@ -3687,8 +3703,10 @@
                      (cont
                       (macro-repl-context-cont rc)))
                 (handle cont depth)))
-             ((##continuation? val)
-              (handle val 0))
+             ((##cont-like->continuation val)
+              =>
+              (lambda (cont)
+                (handle cont 0)))
              ((and (##not (or (##eq? cmd 'b)
                               (##eq? cmd 'be)
                               (##eq? cmd 'bed)))
@@ -4938,6 +4956,7 @@
     (open-paren-expected            . "'(' expected")
     (invalid-token                  . "Invalid token")
     (invalid-sharp-bang-name        . "Invalid '#!' name:")
+    (deserialization-error          . "Deserialization error")
     (duplicate-label-definition     . "Duplicate definition for label:")
     (missing-label-definition       . "Missing definition for label:")
     (illegal-label-definition       . "Illegal definition of label:")

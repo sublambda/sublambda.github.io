@@ -15,7 +15,14 @@
     <!-- get chrome to fuck off -->
     <meta http-equiv="Permissions-Policy" content="interest-cohort=()">
     
-    <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "b787cea6cc1e4790884657397b2ae2b5"}'></script><!-- End Cloudflare Web Analytics -->
+	<script type="importmap">
+	  {
+		"imports": {
+		  "three": "./three.module.js",
+		  "three/addons/": "./jsm/"
+		}
+	  }
+	</script>
 
     <style type="text/css">
 
@@ -23,7 +30,10 @@
         font-family: 'SpecialElite';
         src: url('stuff/SpecialElite-Regular.ttf') format('truetype');
       }
-
+      @font-face {
+        font-family: 'SNPro';
+        src: url('stuff/SNPro-Regular.woff2') format('woff2');
+      }
       ::-webkit-scrollbar {
         display: none;
         width: 0px;
@@ -33,8 +43,14 @@
         background: transparent;
       }
 
+      :focus {
+        outline: 2px solid red;
+        //box-shadow: 0 0 0 3px #333333
+      }
+
       body::backdrop {
         background: #bbbbb0;
+        background: transparent;
         -webkit-overflow-scrolling: none;
         overflow: hidden;
         overscroll-behavior: none;
@@ -43,6 +59,7 @@
       body:fullscreen {
         background: #bbbbb0;
         background: #333333;
+        background-image: "img/sketch_8383188.jpeg";
       }
       body:-webkit-full-screen {
         background: #bbbbb0;
@@ -50,16 +67,19 @@
       }
 
       body {
-        //background: #bbbbb0;
-        background: rgba(0,0,0,0.3);
+        //background: rgba(0,0,0,0.2);
+        //background: #333333;
+        background-image: "img/sketch_8383188.jpeg";
         margin: 0px;
         padding: 0px;
         overflow: hidden;
         //font-family: monospace;
         //font-weight: lighter;
         font-family: SpecialElite;
+        font-family: SNPro;
         font-size: 14px;
         color: rgba(255,255,255,.7);
+        outline: 0px;
       }
 
       iframe {
@@ -77,7 +97,7 @@
       }
 
       .hair {
-        background: rgba(255,0,0,.5);
+        //background: rgba(255,0,0,.5);
         width: 100px;
         height: 80px;
         box-shadow: 1px 1px 5px rgba(0,0,0,0.5);
@@ -345,7 +365,7 @@
       }
 
       .squiggle {
-      //animation: squigglevision 0.6s infinite;
+        //animation: squigglevision 0.6s infinite;
       }
 
       #no {
@@ -356,14 +376,14 @@
         text-shadow: 1px 1px 10px black;
         color: rgba(200,200,200,.5);
         font-size: 200px;
-//      font-family: monospace;
+        //      font-family: monospace;
         position: absolute;
         transition: 1s;
         transition-delay: 1s;
         background: #bbbbb0;
-//        padding: 20px;
-      padding-top: 120px;
-      padding-left: 300px;
+        //        padding: 20px;
+        padding-top: 120px;
+        padding-left: 300px;
         //transform: scale(-1);
         text-align: left;
         visibilty: hidden;
@@ -380,7 +400,8 @@
 
     </style>
 
-    <script xxasync xxdefer src="out.js"></script>
+    <script src="boot.js" type="module"></script>
+    <XXscript src="out.js"></XXscript>
 
   </head>
 
@@ -436,35 +457,35 @@
     <img id="img0" class="image">
     <div id="status" class="status">[]</div>
 
-<!--
-    <div id="no" class=squiggle>
-      uh...
-    D̴̨̤͉̻̀̈́̽͗O̵̪̬̍̈́̀N̸̞̆̚'̴̢̰̫̈́T̸͈̥̤̊̏͒ ̷̺̋͑͋͝L̶̝̝͠Ö̴̬Ò̸̃̄͜K̸̲̐ ̸͔̅A̸̟̟̹̣̎̾T̵̹̊̀̕ ̵̜͙͛̈́İ̸̛̳̟͘T̷̞̰̫̳̑̾
-    <br>
-      f̸̗̎ú̴̩c̷̖ḳ̵̀
-      f̸̗̎ú̴̩c̷̖ḳ̵̀
-      f̸̗̎ú̴̩c̷̖͌ḳ̵̀
-      <br>
-      性交
-      <br>
-      uh...<br>
-      ಠ益ಠ
-      <br>
-      Блять
-    </div>
+    <!--
+        <div id="no" class=squiggle>
+          uh...
+          D̴̨̤͉̻̀̈́̽͗O̵̪̬̍̈́̀N̸̞̆̚'̴̢̰̫̈́T̸͈̥̤̊̏͒ ̷̺̋͑͋͝L̶̝̝͠Ö̴̬Ò̸̃̄͜K̸̲̐ ̸͔̅A̸̟̟̹̣̎̾T̵̹̊̀̕ ̵̜͙͛̈́İ̸̛̳̟͘T̷̞̰̫̳̑̾
+          <br>
+          f̸̗̎ú̴̩c̷̖ḳ̵̀
+          f̸̗̎ú̴̩c̷̖ḳ̵̀
+          f̸̗̎ú̴̩c̷̖͌ḳ̵̀
+          <br>
+          性交
+          <br>
+          uh...<br>
+          ಠ益ಠ
+          <br>
+          Блять
+        </div>
 
-    <script type="text/javascript">
-      setTimeout(()=>document.getElementById("no").style.opacity=0,1);
-      let div = document.getElementById("no"),
+        <script type="text/javascript">
+          setTimeout(()=>document.getElementById("no").style.opacity=0,1);
+          let div = document.getElementById("no"),
           up = 0 //setInterval(()=>div.innerHTML=(Date.now()-t0)/1000, 100);
-      setTimeout(()=> {
-        document.getElementById("no").remove();
-        clearInterval(up);
-      }, 2500);
-    </script>
--->
+          setTimeout(()=> {
+          document.getElementById("no").remove();
+          clearInterval(up);
+          }, 2500);
+        </script>
+        -->
 
 </div>
 
-  </body>
+</body>
 </html>
